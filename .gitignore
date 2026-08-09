@@ -1,56 +1,48 @@
-# Compiled class files
+# Build output
+target/
+build/
+out/
+
+# Compiled files
 *.class
-
-# Log files
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files
 *.jar
 *.war
-*.nar
 *.ear
 *.zip
 *.tar
 *.tar.gz
+*.nar
 
-# Virtual machine crash logs
-hs_err_pid*
-replay_pid*
-
-# Maven
-target/
-!.mvn/wrapper/maven-wrapper.jar
+# Maven / Gradle
 .mvn/wrapper/maven-wrapper.properties
-
-# Gradle
 .gradle/
-build/
 
-# IDE files
+# IDEs
 .idea/
 .vscode/
 *.iml
 *.ipr
 *.iws
+.classpath
+.project
+.settings/
+
+# Logs and temp files
+*.log
+tmp/
+temp/
+hs_err_pid*
+replay_pid*
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# Spring Boot
-application-*.properties
-!application.properties
-
-# Environment files
+# Local environment files
 .env
 .env.*
 
-# Temporary files
-tmp/
-temp/
+# Spring Boot local config overrides
+application-local.properties
+application-dev.properties
+application-test.properties
