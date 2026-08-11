@@ -17,6 +17,7 @@
         <module>actuator</module>
         <module>admin-client</module>
         <module>aop-log</module>
+        <module>exception-handler</module>
     </modules>
 
 </project>
