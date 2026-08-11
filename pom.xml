@@ -14,6 +14,8 @@
         <module>application</module>
         <module>demo-helloworld</module>
         <module>property</module>
+        <module>actuator</module>
+        <module>admin-client</module>
     </modules>
 
 </project>
