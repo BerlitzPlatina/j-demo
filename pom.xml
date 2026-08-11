@@ -16,6 +16,7 @@
         <module>property</module>
         <module>actuator</module>
         <module>admin-client</module>
+        <module>aop-log</module>
     </modules>
 
 </project>
