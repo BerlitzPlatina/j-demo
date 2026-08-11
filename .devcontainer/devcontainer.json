@@ -22,5 +22,15 @@
       ]
     }
   },
+  // "forwardPorts": [
+  //   8080
+  // ],
+  // "portsAttributes": {
+  //   "8080": {
+  //     "label": "Spring Boot Thymeleaf",
+  //     "onAutoForward": "openPreview",
+  //     "requireLocalPort": true
+  //   }
+  // },
   "remoteUser": "vscode"
 }

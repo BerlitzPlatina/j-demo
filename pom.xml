@@ -18,6 +18,7 @@
         <module>admin-client</module>
         <module>aop-log</module>
         <module>exception-handler</module>
+        <module>thymeleaf</module>
     </modules>
 
 </project>
