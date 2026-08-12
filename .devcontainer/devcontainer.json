@@ -18,19 +18,21 @@
       "extensions": [
         "redhat.vscode-xml",
         "visualstudioexptteam.vscodeintellicode",
-        "vscjava.vscode-java-pack"
+        "vscjava.vscode-java-pack",
+        "redhat.java",
+        "vscjava.vscode-spring-initializr"
       ]
     }
   },
-  // "forwardPorts": [
-  //   8080
-  // ],
-  // "portsAttributes": {
-  //   "8080": {
-  //     "label": "Spring Boot Thymeleaf",
-  //     "onAutoForward": "openPreview",
-  //     "requireLocalPort": true
-  //   }
-  // },
+  "forwardPorts": [
+    8080
+  ],
+  "portsAttributes": {
+    "8080": {
+      "label": "Spring Boot App",
+      "onAutoForward": "openPreview",
+      "requireLocalPort": true
+    }
+  },
   "remoteUser": "vscode"
 }

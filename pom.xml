@@ -19,6 +19,7 @@
         <module>aop-log</module>
         <module>exception-handler</module>
         <module>thymeleaf</module>
+        <module>spring-ai-openai</module>
     </modules>
 
 </project>
