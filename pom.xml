@@ -20,6 +20,7 @@
         <module>exception-handler</module>
         <module>thymeleaf</module>
         <module>spring-ai-openai</module>
+        <module>orm-jdbctemplate</module>
     </modules>
 
 </project>
