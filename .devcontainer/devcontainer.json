@@ -20,7 +20,8 @@
         "visualstudioexptteam.vscodeintellicode",
         "vscjava.vscode-java-pack",
         "redhat.java",
-        "vscjava.vscode-spring-initializr"
+        "vscjava.vscode-spring-initializr",
+        "Anthropic.claude-code"
       ]
     }
   },

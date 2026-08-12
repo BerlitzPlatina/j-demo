@@ -1,5 +1,7 @@
 package com.example.springaiopenai;
 
+import com.example.springaiopenai.service.IOrderService;
+import com.example.springaiopenai.tool.OrderTools;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -9,6 +11,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AiController.class)
+@Import(OrderTools.class)
 class SpringAiOpenaiApplicationTests {
 
     @Autowired
@@ -35,6 +39,13 @@ class SpringAiOpenaiApplicationTests {
 
     @MockitoBean
     private ChatModel chatModel;
+
+    /**
+     * OrderTools là bean thật để ChatClient quét được annotation @Tool,
+     * chỉ tầng service (và qua đó là database) bị mock
+     */
+    @MockitoBean
+    private IOrderService orderService;
 
     @BeforeEach
     void setUp() {
@@ -101,5 +112,23 @@ class SpringAiOpenaiApplicationTests {
                 .andExpect(content().string(containsString("token-2")));
 
         verify(chatModel).stream(any(Prompt.class));
+    }
+
+    @Test
+    void toolDemo_shouldReturnModelResponse_whenQuestionIsProvided() throws Exception {
+        mockMvc.perform(get("/api/ai/tool-demo").param("question", "Đơn ORD-1001 đang ở đâu?"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("mock reply"));
+
+        verify(chatModel).call(any(Prompt.class));
+    }
+
+    @Test
+    void toolDemo_shouldReturnValidationMessage_whenQuestionIsBlank() throws Exception {
+        mockMvc.perform(get("/api/ai/tool-demo").param("question", "  "))
+                .andExpect(status().isOk())
+                .andExpect(content().string("question must not be blank"));
+
+        verifyNoInteractions(chatModel);
     }
 }

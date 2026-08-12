@@ -1,9 +1,9 @@
 package com.example.springaiopenai;
 
+import com.example.springaiopenai.tool.OrderTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,26 +17,25 @@ import java.util.Map;
 @RestController
 public class AiController {
 
+    private static final String ORDER_ASSISTANT_SYSTEM_PROMPT = """
+            Bạn là trợ lý hỗ trợ khách hàng của một shop bán hàng online.
+            Dữ liệu đơn hàng nằm trong database, chỉ được lấy qua tool, tuyệt đối không tự suy đoán.
+            Quy tắc:
+            - Câu hỏi về một đơn cụ thể: tìm mã đơn (dạng ORD-xxxx) trong câu hỏi rồi gọi getOrderStatus.
+            - Câu hỏi về các đơn của một người: gọi findOrdersByCustomer.
+            - Câu hỏi về số lượng đơn theo trạng thái: gọi countOrdersByStatus.
+            - Yêu cầu huỷ đơn: gọi cancelOrder, nếu tool trả về lỗi thì giải thích lại cho khách.
+            - Nếu tool trả về found=false, hãy nói rõ là không tìm thấy đơn hàng.
+            Trả lời bằng tiếng Việt, ngắn gọn, tự nhiên.
+            """;
+
     private final ChatClient chatClient;
-    private final OrderService orderService;
 
-    public AiController(ChatModel chatModel, OrderService orderService) {
-        this.orderService = orderService;
+    public AiController(ChatModel chatModel, OrderTools orderTools) {
+        // Đăng ký các tool đọc/ghi database làm tool mặc định của ChatClient
         this.chatClient = ChatClient.builder(chatModel)
-                .defaultTools(this)
+                .defaultTools(orderTools)
                 .build();
-    }
-
-    @Tool(description = "Lấy trạng thái mock của đơn hàng theo orderId")
-    public String getOrderStatus(Long orderId) {
-        OrderStatusResponse response = orderService.getOrderStatus(orderId);
-
-        if (response.location() == null) {
-            return "Đơn hàng " + response.orderId() + " không tìm thấy trong dữ liệu mock.";
-        }
-
-        return "Đơn hàng " + response.orderId() + " đang ở trạng thái: "
-                + response.status() + ". Vị trí hiện tại: " + response.location() + ".";
     }
 
     // Endpoint gọi tự do
@@ -85,8 +84,8 @@ public class AiController {
                 .content();
     }
 
-    // Demo Tool Calling: model sẽ gọi getOrderStatus(orderId), sau đó trả lời lại
-    // cho user bằng câu tự nhiên
+    // Demo Tool Calling: model tự chọn tool, tool truy vấn MySQL qua JdbcTemplate,
+    // sau đó model trả lời lại bằng câu tự nhiên
     @GetMapping("/api/ai/tool-demo")
     public String toolDemo(@RequestParam String question) {
         if (question == null || question.isBlank()) {
@@ -94,7 +93,7 @@ public class AiController {
         }
 
         return chatClient.prompt()
-                .system("Bạn là trợ lý hỗ trợ khách hàng. Nếu câu hỏi liên quan đến đơn hàng, hãy tìm orderId trong câu hỏi, gọi tool getOrderStatus, rồi trả lời lại bằng tiếng Việt tự nhiên, ngắn gọn và rõ ràng.")
+                .system(ORDER_ASSISTANT_SYSTEM_PROMPT)
                 .user(question)
                 .call()
                 .content();
