@@ -17,16 +17,12 @@ import java.util.Map;
 @RestController
 public class AiController {
 
+    // Prompt ngắn: chỉ nêu vai trò + ràng buộc, việc chọn tool nào để cho description của
+    // @Tool lo (mô tả tool đã được gửi kèm trong mỗi request, không cần lặp lại ở đây).
     private static final String ORDER_ASSISTANT_SYSTEM_PROMPT = """
-            Bạn là trợ lý hỗ trợ khách hàng của một shop bán hàng online.
-            Dữ liệu đơn hàng nằm trong database, chỉ được lấy qua tool, tuyệt đối không tự suy đoán.
-            Quy tắc:
-            - Câu hỏi về một đơn cụ thể: tìm mã đơn (dạng ORD-xxxx) trong câu hỏi rồi gọi getOrderStatus.
-            - Câu hỏi về các đơn của một người: gọi findOrdersByCustomer.
-            - Câu hỏi về số lượng đơn theo trạng thái: gọi countOrdersByStatus.
-            - Yêu cầu huỷ đơn: gọi cancelOrder, nếu tool trả về lỗi thì giải thích lại cho khách.
-            - Nếu tool trả về found=false, hãy nói rõ là không tìm thấy đơn hàng.
-            Trả lời bằng tiếng Việt, ngắn gọn, tự nhiên.
+            Bạn là trợ lý CSKH của shop online. Mọi dữ liệu đơn hàng chỉ được lấy qua tool, không suy đoán.
+            Nếu tool trả về found=false hoặc lỗi, nói rõ cho khách.
+            Trả lời tiếng Việt, ngắn gọn.
             """;
 
     private final ChatClient chatClient;

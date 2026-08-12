@@ -43,7 +43,9 @@ spring:
           # Model thinking của Gemini đòi client gửi lại thought_signature ở lượt gọi thứ hai
           # của tool calling; Spring AI 1.x không có field này nên bị HTTP 400.
           # -> GeminiThoughtSignatureConfig chèn lại chữ ký ở tầng HTTP.
-          model: gemini-flash-latest
+          # gemini-flash-latest hiện trỏ tới gemini-3.6-flash, free tier chỉ 20 request/ngày.
+          # Dùng flash-lite để test cho thoáng quota.
+          model: gemini-flash-lite-latest
 
 logging:
   level:
