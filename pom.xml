@@ -21,6 +21,7 @@
         <module>thymeleaf</module>
         <module>spring-ai-openai</module>
         <module>orm-jdbctemplate</module>
+        <module>orm-jpa</module>
     </modules>
 
 </project>
