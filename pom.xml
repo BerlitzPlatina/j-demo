@@ -23,6 +23,7 @@
         <module>orm-jdbctemplate</module>
         <module>orm-jpa</module>
         <module>cache-redis</module>
+        <module>email</module>
     </modules>
 
 </project>
