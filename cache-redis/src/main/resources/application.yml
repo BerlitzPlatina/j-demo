@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: cache-redis
+  data:
+    redis:
+      host: 172.17.0.1
+      port: 6379
+      password: N0R3KnqHufdBOSJpjZEeKkgk
+      database: 0
+      timeout: 5s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: 5s
+
+logging:
+  level:
+    com.example: DEBUG
