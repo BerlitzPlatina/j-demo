@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: rbac-security
+  datasource:
+    url: jdbc:mysql://172.17.0.1:3306/appdb
+    username: root
+    password: TvWS7iUUbVhlG85rO4On9zja
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+
+    hikari:
+      minimum-idle: 5
+      connection-test-query: SELECT 1
+      maximum-pool-size: 20
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: SpringBootDemoHikariCP
+      max-lifetime: 60000
+      connection-timeout: 30000
+  data:
+    redis:
+      # The compose stack runs on the host; from inside the devcontainer the host is reached
+      # through the docker bridge gateway, not localhost.
+      host: 172.17.0.1
+      port: 6379
+      password: N0R3KnqHufdBOSJpjZEeKkgk
+      database: 0
+
+# Urls reachable without a JWT. Login has to be here, otherwise there is no way to obtain a
+# token in the first place.
+custom:
+  config:
+    ignores:
+      post:
+        - /api/auth/login
+
+logging:
+  level:
+    com.example: DEBUG

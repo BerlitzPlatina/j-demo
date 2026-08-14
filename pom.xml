@@ -24,6 +24,8 @@
         <module>orm-jpa</module>
         <module>cache-redis</module>
         <module>email</module>
+        <module>task</module>
+        <module>rbac-security</module>
     </modules>
 
 </project>
