@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: keycloak
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Spring reads the realm's OIDC discovery document from this url on startup and gets the
+          # signing keys (JWKS) from it, so the public key never has to be configured by hand.
+          # The realm runs on the host; from inside the devcontainer that is the bridge gateway.
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://172.17.0.1:8180/realms/demo}
+
+keycloak:
+  # Only tokens actually meant for this API are accepted; a token minted for another client is
+  # rejected even when the signature and the issuer are valid.
+  audience: ${KEYCLOAK_AUDIENCE:spring-api}
+  # Client the login endpoint uses when exchanging credentials for a token. Defaults to audience.
+  client-id: ${KEYCLOAK_CLIENT_ID:spring-api}
+  # Leave empty for a public client; required for a confidential one.
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:}
+
+logging:
+  level:
+    com.example: DEBUG
+    # Uncomment to see why a token was rejected.
+    # org.springframework.security: DEBUG
