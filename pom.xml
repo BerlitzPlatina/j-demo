@@ -26,6 +26,7 @@
         <module>email</module>
         <module>task</module>
         <module>rbac-security</module>
+        <module>mq-rabbitmq</module>
     </modules>
 
 </project>
