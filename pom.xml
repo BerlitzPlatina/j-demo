@@ -28,6 +28,7 @@
         <module>rbac-security</module>
         <module>mq-rabbitmq</module>
         <module>mq-kafka</module>
+        <module>async</module>
     </modules>
 
 </project>
