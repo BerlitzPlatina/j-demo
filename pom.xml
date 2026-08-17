@@ -27,6 +27,7 @@
         <module>task</module>
         <module>rbac-security</module>
         <module>mq-rabbitmq</module>
+        <module>mq-kafka</module>
     </modules>
 
 </project>
