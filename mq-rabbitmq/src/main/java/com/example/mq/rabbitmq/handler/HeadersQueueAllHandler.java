@@ -8,24 +8,23 @@ import org.springframework.stereotype.Component;
 
 /**
  * <p>
- * Queue 3 handler.
+ * Handler for the headers exchange queue bound with x-match=all.
  * </p>
  *
- * @author yangkai.shen
- * @date Created in 2019-01-04 15:42
+ * @author NamHoang
  */
 @Slf4j
-@RabbitListener(queues = RabbitConsts.QUEUE_THREE)
+@RabbitListener(queues = RabbitConsts.HEADERS_QUEUE_ALL)
 @Component
-public class QueueThreeHandler extends AbstractManualAckHandler {
+public class HeadersQueueAllHandler extends AbstractManualAckHandler {
 
     @Override
     protected String queueLabel() {
-        return "Queue 3";
+        return "Headers queue (match all)";
     }
 
     @Override
     protected void process(MessageStruct messageStruct) {
-        log.info("Queue 3, manual ack, received message: {}", messageStruct);
+        log.info("Headers queue (match all), manual ack, received message: {}", messageStruct);
     }
 }

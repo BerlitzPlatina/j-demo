@@ -1,20 +1,16 @@
 package com.example.mq.rabbitmq.handler;
 
-import com.rabbitmq.client.Channel;
 import com.example.mq.rabbitmq.constants.RabbitConsts;
 import com.example.mq.rabbitmq.message.MessageStruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-
 /**
  * <p>
- * 延迟队列处理器
+ * Delay queue handler. Only active together with the delay queue itself, which needs the
+ * rabbitmq_delayed_message_exchange plugin on the broker.
  * </p>
  *
  * @author yangkai.shen
@@ -24,23 +20,15 @@ import java.io.IOException;
 @Component
 @ConditionalOnProperty(name = "rabbitmq.delay.enabled", havingValue = "true")
 @RabbitListener(queues = RabbitConsts.DELAY_QUEUE)
-public class DelayQueueHandler {
+public class DelayQueueHandler extends AbstractManualAckHandler {
 
-    @RabbitHandler
-    public void directHandlerManualAck(MessageStruct messageStruct, Message message, Channel channel) {
-        // 如果手动ACK,消息会被监听消费,但是消息在队列中依旧存在,如果 未配置 acknowledge-mode 默认是会在消费完毕后自动ACK掉
-        final long deliveryTag = message.getMessageProperties().getDeliveryTag();
-        try {
-            log.info("延迟队列，手动ACK，接收消息：{}", messageStruct);
-            // 通知 MQ 消息已被成功消费,可以ACK了
-            channel.basicAck(deliveryTag, false);
-        } catch (IOException e) {
-            try {
-                // 处理失败,重新压入MQ
-                channel.basicRecover();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-        }
+    @Override
+    protected String queueLabel() {
+        return "Delay queue";
+    }
+
+    @Override
+    protected void process(MessageStruct messageStruct) {
+        log.info("Delay queue, manual ack, received message: {}", messageStruct);
     }
 }

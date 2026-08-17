@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 测试消息体
+ * Test message body.
  * </p>
  *
  * @author yangkai.shen
