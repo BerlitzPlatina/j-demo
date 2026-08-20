@@ -29,6 +29,7 @@
         <module>mq-rabbitmq</module>
         <module>mq-kafka</module>
         <module>async</module>
+        <module>migration-flyway</module>
     </modules>
 
 </project>

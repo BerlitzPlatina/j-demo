@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: migration-flyway
+
+  datasource:
+    # createDatabaseIfNotExist lets the module bootstrap its own database: nothing has to exist
+    # beforehand except a reachable MySQL server.
+    url: jdbc:mysql://172.17.0.1:3306/flyway_demo?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: TvWS7iUUbVhlG85rO4On9zja
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  flyway:
+    enabled: true
+    # SQL migrations live in db/migration, Java migrations next to the application code.
+    locations:
+      - classpath:db/migration
+      - classpath:com/example/migration/flyway/migration
+    # Checks that already-applied migrations still match the files on disk. Never turn this off
+    # to "fix" a failure: a checksum mismatch means someone edited applied history.
+    validate-on-migrate: true
+    # Lets the module adopt a database that already has tables but no history table.
+    baseline-on-migrate: true
+    baseline-version: 0
+    baseline-description: existing schema before flyway
+    # Refuses a migration that arrives with a version lower than one already applied, so two
+    # developers cannot silently interleave versions.
+    out-of-order: false
+    # clean drops every object in the schema. Left disabled so it can never run by accident.
+    clean-disabled: true
+    placeholders:
+      # Keys are bound as configuration properties, which lowercases camelCase, so keep
+      # placeholder names snake_case to match what the SQL files reference.
+      default_department: Head Office
+
+logging:
+  level:
+    org.flywaydb: INFO
+    com.example: DEBUG

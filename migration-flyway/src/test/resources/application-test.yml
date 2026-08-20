@@ -1,0 +1,14 @@
+# Loaded on top of src/main/resources/application.yml (profile "test"), so the migration
+# locations and placeholders defined there still apply.
+spring:
+  datasource:
+    # A database of its own, created on connect, so the tests never touch flyway_demo or appdb.
+    url: jdbc:mysql://172.17.0.1:3306/flyway_demo_test?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: TvWS7iUUbVhlG85rO4On9zja
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  flyway:
+    # Enabled only here, against the test database: the tests wipe the schema and migrate from
+    # scratch so every run starts from the same state.
+    clean-disabled: false
