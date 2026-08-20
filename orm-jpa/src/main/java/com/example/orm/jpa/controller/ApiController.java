@@ -3,6 +3,7 @@ package com.example.orm.jpa.controller;
 import com.example.orm.jpa.dto.ApiResponse;
 import com.example.orm.jpa.dto.PageResponse;
 import com.example.orm.jpa.dto.UserCreateRequest;
+import com.example.orm.jpa.dto.UserInclude;
 import com.example.orm.jpa.dto.UserResponse;
 import com.example.orm.jpa.dto.UserUpdateRequest;
 import com.example.orm.jpa.service.UserService;
@@ -26,14 +27,12 @@ import java.util.Set;
 
 /**
  * User CRUD API. Every method answers with the {@link ApiResponse} envelope and
- * {@link UserResponse} transfer objects; entities never leave the service layer.
+ * {@link UserResponse} transfer objects; entities never leave the service
+ * layer.
  */
 @RestController
 @RequestMapping("/api/users")
 public class ApiController {
-
-    /** Value accepted by the {@code include} query parameter. */
-    private static final String INCLUDE_DEPARTMENTS = "departments";
 
     private final UserService userService;
 
@@ -44,8 +43,9 @@ public class ApiController {
     /**
      * GET /api/users?keyword=nam&include=departments&page=0&size=10&sort=createTime,desc
      * <p>
-     * Departments are joined in only when requested through {@code include}, and then with one
-     * extra query for the whole page, so the query count stays flat as the page grows.
+     * {@code include} is the fetch plan, checked against {@link UserInclude}: a relation is
+     * loaded only when named, an unknown name is a 400. Requesting {@code departments} costs one
+     * extra join-table query plus one department query for the whole page, never one per row.
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getUsers(
@@ -53,17 +53,21 @@ public class ApiController {
             @RequestParam(required = false) Set<String> include,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        boolean includeDepartments = include != null && include.contains(INCLUDE_DEPARTMENTS);
-        return ResponseEntity.ok(
-                ApiResponse.success(userService.search(keyword, includeDepartments, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(
+                userService.search(keyword, UserInclude.parse(include), pageable)));
     }
 
     /**
-     * GET /api/users/{id}
+     * GET /api/users/{id}?include=departments
+     * <p>
+     * Same fetch plan as the list endpoint: without {@code include} the response carries no
+     * relation at all.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(userService.getById(id)));
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(
+            @PathVariable Long id,
+            @RequestParam(required = false) Set<String> include) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getById(id, UserInclude.parse(include))));
     }
 
     /**

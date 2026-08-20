@@ -1,7 +1,10 @@
 package com.example.orm.jpa.service;
 
+import com.example.orm.jpa.dto.DepartmentResponse;
 import com.example.orm.jpa.dto.PageResponse;
 import com.example.orm.jpa.dto.UserCreateRequest;
+import com.example.orm.jpa.dto.UserDepartmentLink;
+import com.example.orm.jpa.dto.UserInclude;
 import com.example.orm.jpa.dto.UserResponse;
 import com.example.orm.jpa.dto.UserUpdateRequest;
 import com.example.orm.jpa.entity.Department;
@@ -10,6 +13,7 @@ import com.example.orm.jpa.exception.ResourceNotFoundException;
 import com.example.orm.jpa.mapper.UserMapper;
 import com.example.orm.jpa.repository.DepartmentDao;
 import com.example.orm.jpa.repository.UserDao;
+import com.example.orm.jpa.repository.UserDepartmentDao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,22 +27,29 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
  * CRUD for users.
  * <p>
+ * What gets loaded is decided by the caller through {@link UserInclude}, not by the mapping:
+ * every relation is {@code LAZY}, so nothing is fetched unless it was asked for, and when it is
+ * asked for it is fetched in its own query for the whole page.
+ * <p>
  * The read side is written so the query count never grows with the page size:
  * <ul>
  *   <li>list without departments: 1 page query + 1 count query</li>
- *   <li>list with departments: 1 page query + 1 count query + 1 collection query for the page ids</li>
+ *   <li>list with departments: 1 page query + 1 count query + 1 join-table query + 1 department
+ *       query, matched together in memory (eager loading, not a fetch join)</li>
  *   <li>detail: 1 fetch-join query</li>
  * </ul>
  * That is what keeps N+1 away — {@code departmentList} is mapped {@code LAZY}, and nothing
@@ -58,10 +69,12 @@ public class UserService {
     private static final int DEFAULT_STATUS = 1;
 
     private final UserDao userDao;
+    private final UserDepartmentDao userDepartmentDao;
     private final DepartmentDao departmentDao;
 
-    public UserService(UserDao userDao, DepartmentDao departmentDao) {
+    public UserService(UserDao userDao, UserDepartmentDao userDepartmentDao, DepartmentDao departmentDao) {
         this.userDao = userDao;
+        this.userDepartmentDao = userDepartmentDao;
         this.departmentDao = departmentDao;
     }
 
@@ -69,23 +82,30 @@ public class UserService {
 
     /**
      * Returns a page of users, optionally filtered by a case-insensitive name fragment.
-     * Departments are loaded only when requested, and then in one extra query for the whole page.
+     * <p>
+     * {@code includes} is the fetch plan: a relation is loaded only when it is in the set, and
+     * then in its own batched queries for the whole page - never per row.
      */
-    public PageResponse<UserResponse> search(String keyword, boolean includeDepartments, Pageable pageable) {
+    public PageResponse<UserResponse> search(String keyword, Set<UserInclude> includes, Pageable pageable) {
         Page<User> page = userDao.findByNameContainingIgnoreCase(
                 StringUtils.hasText(keyword) ? keyword.trim() : "", withSafeSort(pageable));
 
-        if (!includeDepartments) {
+        if (!includes.contains(UserInclude.DEPARTMENTS)) {
             return PageResponse.from(page, UserMapper::toSummary);
         }
         return PageResponse.of(page, withDepartments(page.getContent()));
     }
 
     /**
-     * Returns a single user with departments.
+     * Returns a single user, with the relations named in {@code includes} and nothing else.
+     * A single row can afford a fetch join, so this stays one query either way.
      */
-    public UserResponse getById(Long id) {
-        return UserMapper.toDetail(findDetailOrThrow(id));
+    public UserResponse getById(Long id, Set<UserInclude> includes) {
+        if (includes.contains(UserInclude.DEPARTMENTS)) {
+            return UserMapper.toDetail(findDetailOrThrow(id));
+        }
+        return UserMapper.toSummary(userDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id)));
     }
 
     // ----------------------------------------------------------------- write
@@ -139,23 +159,43 @@ public class UserService {
     }
 
     /**
-     * Maps the page content to detail responses, loading every department of the page in one query
-     * and keeping the page's original order.
+     * Rest of the eager load, in two more queries and a bit of in-memory matching:
+     * <ol>
+     *   <li>select the join table rows of the page's user ids - pairs of (userId, departmentId)</li>
+     *   <li>select those department ids from {@code orm_department}</li>
+     *   <li>index the departments by id, then walk the links to give every user its own list</li>
+     * </ol>
+     * The page's order is preserved, and a user with no link gets an empty list.
      */
     private List<UserResponse> withDepartments(List<User> users) {
         if (users.isEmpty()) {
             return List.of();
         }
-        List<Long> ids = users.stream().map(User::getId).toList();
-        Map<Long, User> fetched = userDao.findAllWithDepartmentsByIdIn(ids).stream()
-                .collect(Collectors.toMap(User::getId, Function.identity(), (first, second) -> first));
+        List<Long> userIds = users.stream().map(User::getId).toList();
+
+        // Query 1 of the relation: the links, ids only.
+        List<UserDepartmentLink> links = userDepartmentDao.findLinksByUserIdIn(userIds);
+
+        // Query 2 of the relation: the departments those links point at, skipped when there are none.
+        Set<Long> departmentIds = links.stream().map(UserDepartmentLink::departmentId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<Long, DepartmentResponse> departmentsById = departmentIds.isEmpty()
+                ? Map.of()
+                : departmentDao.findResponsesByIdIn(departmentIds).stream()
+                        .collect(Collectors.toMap(DepartmentResponse::id, Function.identity()));
+
+        // Matching: link.departmentId -> the department loaded above.
+        Map<Long, List<DepartmentResponse>> byUserId = new HashMap<>();
+        for (UserDepartmentLink link : links) {
+            DepartmentResponse department = departmentsById.get(link.departmentId());
+            if (department != null) {
+                byUserId.computeIfAbsent(link.userId(), key -> new ArrayList<>()).add(department);
+            }
+        }
 
         List<UserResponse> content = new ArrayList<>(users.size());
-        for (Long id : ids) {
-            User fetchedUser = fetched.get(id);
-            if (fetchedUser != null) {
-                content.add(UserMapper.toDetail(fetchedUser));
-            }
+        for (User user : users) {
+            content.add(UserMapper.toDetail(user, byUserId.getOrDefault(user.getId(), List.of())));
         }
         return content;
     }

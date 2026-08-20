@@ -26,6 +26,14 @@ public final class UserMapper {
         return toResponse(user, toDepartments(user.getDepartmentList()));
     }
 
+    /**
+     * Detail with departments supplied by a separate query, so the user's own lazy collection is
+     * never touched.
+     */
+    public static UserResponse toDetail(User user, List<DepartmentResponse> departments) {
+        return toResponse(user, departments);
+    }
+
     public static DepartmentResponse toDepartment(Department department) {
         return new DepartmentResponse(
                 department.getId(), department.getName(), department.getLevels(), department.getOrderNo());

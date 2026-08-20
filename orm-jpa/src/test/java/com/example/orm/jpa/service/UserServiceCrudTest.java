@@ -2,6 +2,7 @@ package com.example.orm.jpa.service;
 
 import com.example.orm.jpa.dto.PageResponse;
 import com.example.orm.jpa.dto.UserCreateRequest;
+import com.example.orm.jpa.dto.UserInclude;
 import com.example.orm.jpa.dto.UserResponse;
 import com.example.orm.jpa.dto.UserUpdateRequest;
 import com.example.orm.jpa.entity.Department;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,6 +29,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 @Transactional
 class UserServiceCrudTest {
+
+    /** No relation requested: the lazy collections must stay untouched. */
+    private static final Set<UserInclude> NONE = Set.of();
+    private static final Set<UserInclude> DEPARTMENTS = Set.of(UserInclude.DEPARTMENTS);
 
     @Autowired
     private UserService userService;
@@ -59,7 +65,7 @@ class UserServiceCrudTest {
         assertThat(created.departments()).extracting("name")
                 .containsExactlyInAnyOrder("crud_IT", "crud_Sales");
 
-        UserResponse read = userService.getById(created.id());
+        UserResponse read = userService.getById(created.id(), DEPARTMENTS);
         assertThat(read.email()).isEqualTo("crud1@example.com");
         assertThat(read.departments()).hasSize(2);
 
@@ -93,7 +99,7 @@ class UserServiceCrudTest {
         }
 
         PageResponse<UserResponse> firstPage = userService.search(
-                "crud_p", false, PageRequest.of(0, 3, Sort.by("id")));
+                "crud_p", NONE, PageRequest.of(0, 3, Sort.by("id")));
 
         assertThat(firstPage.content()).hasSize(3);
         assertThat(firstPage.page()).isZero();
@@ -106,21 +112,37 @@ class UserServiceCrudTest {
         assertThat(firstPage.content().get(0).departments()).isNull();
 
         PageResponse<UserResponse> lastPage = userService.search(
-                "crud_p", true, PageRequest.of(2, 3, Sort.by("id")));
+                "crud_p", DEPARTMENTS, PageRequest.of(2, 3, Sort.by("id")));
         assertThat(lastPage.content()).hasSize(1);
         assertThat(lastPage.last()).isTrue();
         assertThat(lastPage.content().get(0).departments()).extracting("name").containsExactly("crud_IT");
     }
 
     @Test
+    void includeDecidesWhatIsLoaded() {
+        UserResponse created = userService.create(request("4", List.of(itId, salesId)));
+
+        // Not requested: the field is absent from the payload, not an empty list.
+        assertThat(userService.getById(created.id(), NONE).departments()).isNull();
+        assertThat(userService.getById(created.id(), DEPARTMENTS).departments()).hasSize(2);
+
+        assertThat(UserInclude.parse(null)).isEmpty();
+        assertThat(UserInclude.parse(List.of("DEPARTMENTS", " departments ")))
+                .containsExactly(UserInclude.DEPARTMENTS);
+        assertThatThrownBy(() -> UserInclude.parse(List.of("department")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Allowed: departments");
+    }
+
+    @Test
     void unknownIdsAndSortsAreRejected() {
-        assertThatThrownBy(() -> userService.getById(-1L))
+        assertThatThrownBy(() -> userService.getById(-1L, NONE))
                 .isInstanceOf(ResourceNotFoundException.class);
         assertThatThrownBy(() -> userService.delete(-1L))
                 .isInstanceOf(ResourceNotFoundException.class);
         assertThatThrownBy(() -> userService.create(request("3", List.of(-1L))))
                 .isInstanceOf(ResourceNotFoundException.class);
-        assertThatThrownBy(() -> userService.search(null, false, PageRequest.of(0, 10, Sort.by("password"))))
+        assertThatThrownBy(() -> userService.search(null, NONE, PageRequest.of(0, 10, Sort.by("password"))))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

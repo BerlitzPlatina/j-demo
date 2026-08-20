@@ -35,7 +35,10 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: validate
-    open-in-view: true
+    # Off on purpose: with it on, a lazy relation touched during JSON serialization is loaded
+    # silently, one query per row. Off, that same mistake fails loudly with
+    # LazyInitializationException instead of becoming a hidden N+1 in production.
+    open-in-view: false
 
 logging:
   level:
