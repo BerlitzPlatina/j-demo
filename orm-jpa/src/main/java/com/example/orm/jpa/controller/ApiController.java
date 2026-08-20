@@ -1,24 +1,95 @@
 package com.example.orm.jpa.controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import com.example.orm.jpa.dto.ApiResponse;
+import com.example.orm.jpa.dto.PageResponse;
+import com.example.orm.jpa.dto.UserCreateRequest;
+import com.example.orm.jpa.dto.UserResponse;
+import com.example.orm.jpa.dto.UserUpdateRequest;
+import com.example.orm.jpa.service.UserService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import java.util.Map;
-import com.example.orm.jpa.entity.User;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.example.orm.jpa.repository.UserDao;
+import java.util.Set;
 
+/**
+ * User CRUD API. Every method answers with the {@link ApiResponse} envelope and
+ * {@link UserResponse} transfer objects; entities never leave the service layer.
+ */
 @RestController
+@RequestMapping("/api/users")
 public class ApiController {
-    private final UserDao userDao;
 
-    public ApiController(UserDao userDao) {
-        this.userDao = userDao;
+    /** Value accepted by the {@code include} query parameter. */
+    private static final String INCLUDE_DEPARTMENTS = "departments";
+
+    private final UserService userService;
+
+    public ApiController(UserService userService) {
+        this.userService = userService;
     }
 
-    @GetMapping("/users/{id}")
-    public Map<String, Object> getUser(@PathVariable Long id) {
-        User user = userDao.findById(id).orElse(null);
-        return Map.of("code", 200, "msg", "成功", "data", user);
+    /**
+     * GET /api/users?keyword=nam&include=departments&page=0&size=10&sort=createTime,desc
+     * <p>
+     * Departments are joined in only when requested through {@code include}, and then with one
+     * extra query for the whole page, so the query count stays flat as the page grows.
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getUsers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Set<String> include,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        boolean includeDepartments = include != null && include.contains(INCLUDE_DEPARTMENTS);
+        return ResponseEntity.ok(
+                ApiResponse.success(userService.search(keyword, includeDepartments, pageable)));
+    }
+
+    /**
+     * GET /api/users/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getById(id)));
+    }
+
+    /**
+     * POST /api/users
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<UserResponse>> createUser(@Valid @RequestBody UserCreateRequest request) {
+        UserResponse created = userService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(created));
+    }
+
+    /**
+     * PUT /api/users/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
+            @PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(userService.update(id, request)));
+    }
+
+    /**
+     * DELETE /api/users/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+        userService.delete(id);
+        return ResponseEntity.ok(ApiResponse.message("Deleted"));
     }
 }

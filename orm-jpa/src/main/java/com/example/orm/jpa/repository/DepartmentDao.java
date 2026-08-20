@@ -8,9 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * <p>
- * User Dao
- * </p>
+ * Department Dao.
  *
  * @author 76peter
  * @date Created in 2019-10-01 18:07
@@ -18,10 +16,10 @@ import java.util.List;
 @Repository
 public interface DepartmentDao extends JpaRepository<Department, Long> {
     /**
-     * 根据层级查询部门
+     * Finds departments by hierarchy level.
      *
-     * @param level 层级
-     * @return 部门列表
+     * @param level hierarchy level
+     * @return matching departments
      */
     List<Department> findDepartmentsByLevels(Integer level);
 }

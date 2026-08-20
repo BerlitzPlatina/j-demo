@@ -8,7 +8,7 @@ import java.util.Collection;
 
 /**
  * <p>
- * 部门实体类
+ * Department entity
  * </p>
  *
  * @author 76peter
@@ -25,37 +25,43 @@ import java.util.Collection;
 public class Department extends AbstractAuditModel {
 
     /**
-     * 部门名
+     * Department name
      */
     @Column(name = "name", columnDefinition = "varchar(255) not null")
     private String name;
 
     /**
-     * 上级部门id
+     * Parent department
      */
-    @ManyToOne(cascade = { CascadeType.REFRESH }, optional = true)
+    @ManyToOne(cascade = { CascadeType.REFRESH }, fetch = FetchType.LAZY, optional = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @JoinColumn(name = "superior", referencedColumnName = "id")
     private Department superior;
     /**
-     * 所属层级
+     * Hierarchy level
      */
     @Column(name = "levels", columnDefinition = "int not null default 0")
     private Integer levels;
     /**
-     * 排序
+     * Sort order
      */
     @Column(name = "order_no", columnDefinition = "int not null default 0")
     private Integer orderNo;
     /**
-     * 子部门集合
+     * Child departments. Lazy, so loading a department never drags the whole tree along.
      */
-    @OneToMany(cascade = { CascadeType.REFRESH, CascadeType.REMOVE }, fetch = FetchType.EAGER, mappedBy = "superior")
+    @OneToMany(cascade = { CascadeType.REFRESH, CascadeType.REMOVE }, fetch = FetchType.LAZY, mappedBy = "superior")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Collection<Department> children;
 
     /**
-     * 部门下用户集合
+     * Users assigned to this department (inverse side)
      */
     @ManyToMany(mappedBy = "departmentList")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Collection<User> userList;
 
 }
