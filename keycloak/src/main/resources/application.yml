@@ -15,6 +15,11 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://172.17.0.1:8180/realms/demo}
 
 keycloak:
+  # Which endpoints need no token. This is per-service configuration on purpose: the shared
+  # resource-server setup in common-security does not decide it.
+  public-paths:
+    - /api/auth/**
+    - /api/public
   # Only tokens actually meant for this API are accepted; a token minted for another client is
   # rejected even when the signature and the issuer are valid.
   audience: ${KEYCLOAK_AUDIENCE:spring-api}

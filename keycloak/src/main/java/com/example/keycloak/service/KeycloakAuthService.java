@@ -1,6 +1,6 @@
 package com.example.keycloak.service;
 
-import com.example.keycloak.config.KeycloakProperties;
+import com.example.common.security.KeycloakProperties;
 import com.example.keycloak.dto.TokenResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

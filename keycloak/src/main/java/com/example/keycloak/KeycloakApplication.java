@@ -1,12 +1,17 @@
 package com.example.keycloak;
 
+import com.example.common.security.ResourceServerSecurityConfig;
 import org.springframework.boot.SpringApplication;
-import com.example.keycloak.config.KeycloakProperties;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Import;
 
+/**
+ * The resource server setup lives in the common-security jar, outside this application's
+ * component-scan root, so it is pulled in explicitly here. {@code keycloak.public-paths} in
+ * application.yml decides which endpoints stay open.
+ */
 @SpringBootApplication
-@EnableConfigurationProperties(KeycloakProperties.class)
+@Import(ResourceServerSecurityConfig.class)
 public class KeycloakApplication {
 
 	public static void main(String[] args) {

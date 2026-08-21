@@ -1,4 +1,4 @@
-package com.example.keycloak.config;
+package com.example.common.security;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
