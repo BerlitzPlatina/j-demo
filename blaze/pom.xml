@@ -10,9 +10,9 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>orm-jpa</artifactId>
+	<artifactId>blaze</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>orm-jpa</name>
+	<name>blaze</name>
 	<description />
 	<url />
 	<licenses>
@@ -32,6 +32,17 @@
 		<blaze-persistence.version>1.6.20</blaze-persistence.version>
 	</properties>
 	<dependencies>
+		<dependency>
+			<groupId>com.example</groupId>
+			<artifactId>common-web</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.example</groupId>
+			<artifactId>common-jpa</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>

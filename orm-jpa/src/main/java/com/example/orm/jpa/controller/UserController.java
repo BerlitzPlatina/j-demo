@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.orm.jpa.dto.ApiResponse;
+import com.example.common.web.dto.ApiResponse;
 import com.example.orm.jpa.dto.UserInclude;
 import com.example.orm.jpa.dto.UserResponse;
 import com.example.orm.jpa.entity.User;

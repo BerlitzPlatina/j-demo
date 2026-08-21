@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.1.0</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.example</groupId>
+	<artifactId>common-web</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>common-web</name>
+	<description>Shared REST building blocks: response envelope, paging view, exception handling</description>
+
+	<properties>
+		<java.version>21</java.version>
+	</properties>
+
+	<!--
+	  Plain jar on purpose: no spring-boot-maven-plugin here. That plugin repackages the jar
+	  into an executable fat jar (classes under BOOT-INF/), which other modules cannot compile
+	  against. A module meant to be depended on must stay a plain jar.
+	-->
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
+		<!-- PageResponse maps a Page; spring-data-commons is enough, no JPA needed. -->
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-commons</artifactId>
+		</dependency>
+
+		<!--
+		  For org.springframework.dao.DataAccessException, which the handler maps to 409.
+		  That hierarchy ships in spring-tx and is data-access-technology agnostic (JdbcTemplate
+		  raises it too), so it belongs here rather than forcing common-jpa to depend on web.
+		-->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

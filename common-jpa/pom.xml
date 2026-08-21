@@ -10,17 +10,26 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>library</artifactId>
-	<version>1.0-SNAPSHOT</version>
-	<name>library</name>
-	<description>Demo project for Spring Boot</description>
+	<artifactId>common-jpa</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>common-jpa</name>
+	<description>Shared JPA building blocks: audited entity base class</description>
+
 	<properties>
 		<java.version>21</java.version>
 	</properties>
+
+	<!-- Plain jar on purpose - see the note in common-web/pom.xml. -->
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
@@ -29,5 +38,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
 </project>

@@ -1,6 +1,6 @@
 package com.example.orm.jpa.service;
 
-import com.example.orm.jpa.dto.PageResponse;
+import com.example.common.web.dto.PageResponse;
 import com.example.orm.jpa.dto.UserInclude;
 import com.example.orm.jpa.dto.UserResponse;
 import com.example.orm.jpa.entity.Department;

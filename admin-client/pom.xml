@@ -29,7 +29,15 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<!--
+		  Held back at Spring Boot 3.5.x on purpose. Spring Boot Admin has no Boot 4 release yet:
+		  its latest (3.4.1) still resolves org.springframework.boot.autoconfigure.web.ServerProperties,
+		  which Boot 4 moved to org.springframework.boot.web.server.autoconfigure, so the client
+		  auto-configuration fails at context startup. Bump this once Spring Boot Admin ships Boot 4
+		  support.
+		-->
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

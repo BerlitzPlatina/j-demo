@@ -1,7 +1,7 @@
 package com.example.orm.jpa.controller;
 
-import com.example.orm.jpa.dto.ApiResponse;
-import com.example.orm.jpa.dto.PageResponse;
+import com.example.common.web.dto.ApiResponse;
+import com.example.common.web.dto.PageResponse;
 import com.example.orm.jpa.service.UserService;
 import com.example.orm.jpa.view.UserDetailView;
 import com.example.orm.jpa.view.UserSummaryView;

@@ -1,4 +1,4 @@
-package com.example.orm.jpa.exception;
+package com.example.common.web.exception;
 
 /**
  * Thrown when a requested resource does not exist.

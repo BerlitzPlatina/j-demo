@@ -41,7 +41,8 @@ public class JpaConfig {
         LocalContainerEntityManagerFactoryBean entityManagerFactory = new LocalContainerEntityManagerFactoryBean();
         entityManagerFactory.setDataSource(dataSource());
         entityManagerFactory.setJpaVendorAdapter(japVendor);
-        entityManagerFactory.setPackagesToScan("com.example.orm.jpa.entity");
+        // The second package holds the @MappedSuperclass shared through the common-jpa jar.
+        entityManagerFactory.setPackagesToScan("com.example.orm.jpa.entity", "com.example.common.jpa.entity");
         return entityManagerFactory;
     }
 

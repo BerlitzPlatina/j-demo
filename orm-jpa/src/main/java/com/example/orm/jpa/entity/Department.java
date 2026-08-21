@@ -1,6 +1,6 @@
 package com.example.orm.jpa.entity;
 
-import com.example.orm.jpa.entity.base.AbstractAuditModel;
+import com.example.common.jpa.entity.AbstractAuditModel;
 import lombok.*;
 
 import jakarta.persistence.*;

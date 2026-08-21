@@ -10,6 +10,8 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>common-web</module>
+        <module>common-jpa</module>
         <module>library</module>
         <module>application</module>
         <module>demo-helloworld</module>
@@ -22,6 +24,7 @@
         <module>spring-ai-openai</module>
         <module>orm-jdbctemplate</module>
         <module>orm-jpa</module>
+        <module>blaze</module>
         <module>cache-redis</module>
         <module>email</module>
         <module>task</module>

@@ -7,7 +7,7 @@ import com.blazebit.persistence.view.EntityViewManager;
 import com.blazebit.persistence.view.EntityViewSetting;
 import com.blazebit.persistence.view.Sorters;
 import com.example.orm.jpa.entity.User;
-import com.example.orm.jpa.exception.ResourceNotFoundException;
+import com.example.common.web.exception.ResourceNotFoundException;
 import com.example.orm.jpa.view.UserDetailView;
 import com.example.orm.jpa.view.UserSummaryView;
 import com.example.orm.jpa.view.UserWithDepartmentsView;

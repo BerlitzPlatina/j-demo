@@ -1,6 +1,6 @@
-package com.example.orm.jpa.exception;
+package com.example.common.web.exception;
 
-import com.example.orm.jpa.dto.ApiResponse;
+import com.example.common.web.dto.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -9,14 +9,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
 /**
  * Turns exceptions into the same {@link ApiResponse} envelope used by the controllers.
+ * <p>
+ * Deliberately <strong>not</strong> annotated with {@code @RestControllerAdvice}: this class lives in
+ * a jar, outside the component-scan root of the applications that depend on it, so annotating it
+ * here would achieve nothing. Each application declares its own advice extending this class, which
+ * its own scan does pick up:
+ * <pre>
+ * &#64;RestControllerAdvice
+ * public class MyExceptionHandler extends GlobalExceptionHandler { }
+ * </pre>
+ * Spring discovers {@code @ExceptionHandler} methods through the bean's class hierarchy, so the
+ * subclass inherits every mapping below and can override the hooks to specialise a message.
+ * This is the same shape as Spring's own {@code ResponseEntityExceptionHandler}.
  */
-@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -41,12 +51,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(HttpStatus.BAD_REQUEST, ex.getMessage()));
     }
 
-    /** Unique constraints on name / email / phone_number surface here. */
+    /** Violated unique constraints surface here. */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConflict(DataIntegrityViolationException ex) {
         log.warn("Data integrity violation", ex);
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(HttpStatus.CONFLICT, "name, email and phoneNumber must be unique"));
+                .body(ApiResponse.error(HttpStatus.CONFLICT, dataIntegrityMessage(ex)));
     }
 
     @ExceptionHandler(Exception.class)
@@ -54,6 +64,14 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"));
+    }
+
+    /**
+     * Message returned for a constraint violation. The generic default says nothing about the
+     * schema; override it to name the columns that are actually unique in your module.
+     */
+    protected String dataIntegrityMessage(DataIntegrityViolationException ex) {
+        return "Request conflicts with an existing record";
     }
 
     private static String defaultMessage(FieldError error) {

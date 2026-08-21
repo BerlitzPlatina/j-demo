@@ -1,4 +1,4 @@
-package com.example.orm.jpa.dto;
+package com.example.common.web.dto;
 
 import org.springframework.data.domain.Page;
 

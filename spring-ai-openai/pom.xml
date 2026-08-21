@@ -19,6 +19,12 @@
 
     <properties>
         <java.version>21</java.version>
+        <!--
+          Held back at Spring Boot 3.5.x on purpose. Spring AI has no Boot 4 release yet - 1.0.0 is
+          the latest and it targets Boot 3.5: it compiles against org.springframework.boot.web.client
+          .RestClientCustomizer, which Boot 4 moved out of that package (see
+          GeminiThoughtSignatureConfig). Bump both together once Spring AI ships Boot 4 support.
+        -->
         <spring-ai.version>1.0.0</spring-ai.version>
     </properties>
 

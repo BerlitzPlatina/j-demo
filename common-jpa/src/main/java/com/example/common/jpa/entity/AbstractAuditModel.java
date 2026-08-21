@@ -1,4 +1,4 @@
-package com.example.orm.jpa.entity.base;
+package com.example.common.jpa.entity;
 
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
@@ -11,7 +11,7 @@ import java.util.Date;
 
 /**
  * <p>
- * 实体通用父类
+ * Common base class for entities
  * </p>
  *
  * @author yangkai.shen
@@ -22,14 +22,14 @@ import java.util.Date;
 @Data
 public abstract class AbstractAuditModel implements Serializable {
     /**
-     * 主键
+     * Primary key
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
-     * 创建时间
+     * Creation time
      */
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_time", nullable = false, updatable = false)
@@ -37,7 +37,7 @@ public abstract class AbstractAuditModel implements Serializable {
     private Date createTime;
 
     /**
-     * 上次更新时间
+     * Last update time
      */
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "last_update_time", nullable = false)

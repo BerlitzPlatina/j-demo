@@ -2,7 +2,7 @@ package com.example.orm.jpa.service;
 
 import com.example.orm.jpa.entity.Department;
 import com.example.orm.jpa.entity.User;
-import com.example.orm.jpa.exception.ResourceNotFoundException;
+import com.example.common.web.exception.ResourceNotFoundException;
 import com.example.orm.jpa.repository.DepartmentDao;
 import com.example.orm.jpa.repository.UserDao;
 import com.example.orm.jpa.view.UserDetailView;
