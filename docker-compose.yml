@@ -1,0 +1,35 @@
+# Runs the gateway with one service behind it.
+#
+# Build the jars first, the images copy them in:
+#   ./mvnw -f gateway/pom.xml -DskipTests package
+#   ./mvnw -f keycloak/pom.xml -DskipTests package
+#   docker compose up --build
+#
+# Keycloak itself and MySQL are not in here: they run on the host, which is what the modules'
+# configuration already points at. Note the address used for them is 172.17.0.1, the outer docker
+# bridge - NOT host.docker.internal or host-gateway. This project is developed inside a
+# docker-in-docker devcontainer, so host-gateway would resolve to the devcontainer rather than to
+# the machine actually running Keycloak.
+services:
+
+  gateway:
+    build: ./gateway
+    # The only published port. Everything else stays on the internal network.
+    ports:
+      - "8080:8080"
+    environment:
+      # Service name on the compose network; no discovery service needed for this.
+      KEYCLOAK_API_URI: http://keycloak-api:8081
+      KEYCLOAK_ISSUER_URI: http://172.17.0.1:8180/realms/demo
+      KEYCLOAK_AUDIENCE: spring-api
+    depends_on:
+      - keycloak-api
+
+  keycloak-api:
+    build: ./keycloak
+    # No ports section on purpose: unreachable from outside the compose network, so the gateway is
+    # the only way in. It still validates every token itself - see GatewaySecurityConfig for why.
+    environment:
+      SERVER_PORT: 8081
+      KEYCLOAK_ISSUER_URI: http://172.17.0.1:8180/realms/demo
+      KEYCLOAK_AUDIENCE: spring-api

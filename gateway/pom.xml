@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<!--
+		  Held at Spring Boot 3.5.x on purpose, and unlike admin-client this costs nothing.
+		  Spring Cloud has no Boot 4 release yet: gateway 4.3.0 (the latest) fails at startup on
+		  Boot 4 with NoClassDefFoundError on org.springframework.boot.autoconfigure.web
+		  .ServerProperties, which Boot 4 moved to org.springframework.boot.web.server
+		  .autoconfigure. The gateway is its own process and shares no JVM with the services
+		  behind it, so its Boot version is independent of theirs - that independence is the
+		  point of running it separately. Bump once Spring Cloud ships a Boot 4 line.
+		-->
+		<version>3.5.11</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.example</groupId>
+	<artifactId>gateway</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>gateway</name>
+	<description>Single entry point in front of the services: routing plus token check at the edge</description>
+
+	<properties>
+		<java.version>21</java.version>
+		<spring-cloud.version>2025.0.0</spring-cloud.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<!--
+		  Spring Cloud 2025 renamed this artifact: the old spring-cloud-starter-gateway, which most
+		  tutorials still use, no longer exists. The webflux server is the reactive one; there is a
+		  -server-webmvc variant for the blocking stack.
+		-->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
+		</dependency>
+
+		<!--
+		  Deliberately NOT depending on common-security. That jar is built against Boot 4 /
+		  Spring Security 7 and is servlet based (HttpSecurity, jakarta.servlet.DispatcherType);
+		  this module is Boot 3.5 and reactive. Sharing it would mean mixing two Spring Security
+		  majors and dragging spring-boot-starter-web onto a WebFlux app, which would start a
+		  servlet container instead of Netty. The ~40 lines duplicated in GatewaySecurityConfig
+		  are the correct trade here.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

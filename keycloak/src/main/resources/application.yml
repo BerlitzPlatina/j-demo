@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  # Overridable so docker-compose does not depend on the value baked in here.
+  port: ${SERVER_PORT:8081}
 
 spring:
   application:

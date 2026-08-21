@@ -1,0 +1,61 @@
+server:
+  # The only port that is ever exposed. Services stay on the internal network and are reachable
+  # through this gateway only - which is also why .devcontainer/devcontainer.json needs to forward
+  # nothing beyond 8080.
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    gateway:
+      # Spring Cloud 2025 moved this block: it used to be spring.cloud.gateway.routes.
+      server:
+        webflux:
+          routes:
+            # The keycloak module standing in for a business service. Its endpoints already live
+            # under /api, so the prefix is passed through untouched.
+            # - id: keycloak-api
+            #   uri: ${KEYCLOAK_API_URI:http://localhost:8081}
+            #   predicates:
+            #     - Path=/api/**
+
+            - id: aop-log-api
+              uri: ${AOPLOG_API_URI:http://localhost:8082}
+              predicates:
+                - Path=/api/aop-log/**
+
+            # What a real service route looks like. StripPrefix=1 drops the /students segment, so
+            # GET /students/api/users reaches the service as GET /api/users.
+            # - id: students
+            #   uri: ${STUDENTS_URI:http://localhost:8083}
+            #   predicates:
+            #     - Path=/students/**
+            #   filters:
+            #     - StripPrefix=1
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Read from the host: Keycloak runs outside this devcontainer. Inside docker-in-docker,
+          # host.docker.internal / host-gateway resolves to the devcontainer itself rather than the
+          # machine running Keycloak, so the bridge address is used explicitly.
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://172.17.0.1:8180/realms/demo}
+
+keycloak:
+  audience: ${KEYCLOAK_AUDIENCE:spring-api}
+  # Open routes, same list the service behind applies to itself.
+  public-paths:
+    - /api/auth/**
+    - /api/public
+    # aop-log is a demo module with no security of its own, so the edge must let it through -
+    # otherwise the gateway rejects the request with 401 before aop-log ever sees it.
+    - /api/aop-log/**
+
+logging:
+  level:
+    com.example: DEBUG
+    # Uncomment to see how a request was matched and where it was sent.
+    # org.springframework.cloud.gateway: DEBUG
