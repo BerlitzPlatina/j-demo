@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/1_organization.yml
+  - include:
+      file: db/changelog/2_address.yml

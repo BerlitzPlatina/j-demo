@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-organization
+      author: nam
+      changes:
+        - createTable:
+            tableName: organizations
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: is_logo_uploaded
+                  type: VARCHAR(10)
+
+              - column:
+                  name: is_default_org
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: user_role
+                  type: VARCHAR(100)
+
+              - column:
+                  name: account_created_date
+                  type: DATE
+
+              - column:
+                  name: time_zone
+                  type: VARCHAR(50)
+
+              - column:
+                  name: language_code
+                  type: VARCHAR(10)
+
+              - column:
+                  name: date_format
+                  type: VARCHAR(50)
+
+              - column:
+                  name: field_separator
+                  type: VARCHAR(10)
+
+              - column:
+                  name: fiscal_year_start_month
+                  type: INT
+
+              - column:
+                  name: tax_group_enabled
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: user_status
+                  type: VARCHAR(50)
+
+              - column:
+                  name: contact_name
+                  type: VARCHAR(255)
+
+              - column:
+                  name: industry_type
+                  type: VARCHAR(100)
