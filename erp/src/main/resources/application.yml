@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: erp
+
+  datasource:
+    url: jdbc:mysql://172.17.0.1:3306/erp
+    username: root
+    password: TvWS7iUUbVhlG85rO4On9zja
+
+  # The application owns its schema: migrations run before the EntityManagerFactory is built,
+  # so ddl-auto=validate below is checking mappings against a schema that is already up to date.
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.yaml
+
+  jpa:
+    # Never let Hibernate touch the schema - liquibase is the only thing that changes it.
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    # Off on purpose: a lazy relation touched during JSON serialization should fail loudly
+    # rather than turn into a hidden N+1 in production.
+    open-in-view: false
+    properties:
+      hibernate:
+        type:
+          # MySQL has no real BOOLEAN: liquibase's BOOLEAN becomes TINYINT(1), while Hibernate
+          # maps a Boolean to BIT by default, which validate then reports as a type mismatch.
+          preferred_boolean_jdbc_type: TINYINT
+
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 100
+
+server:
+  # 8080-8082 are taken by the standalone samples in this repo (orm-jpa, blaze, aop-log).
+  port: 8100
+
+logging:
+  level:
+    com.example: DEBUG
+    org.hibernate.SQL: DEBUG

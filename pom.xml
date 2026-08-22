@@ -35,7 +35,7 @@
         <module>async</module>
         <module>migration-flyway</module>
         <module>gateway</module>
-        <module>liquibase</module>
+        <module>erp</module>
     </modules>
 
 </project>
