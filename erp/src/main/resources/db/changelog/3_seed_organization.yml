@@ -1,0 +1,117 @@
+databaseChangeLog:
+  - changeSet:
+      id: seed-organizations
+      author: nam
+      # Development seed data. Runs once and only against an empty table, so a database that
+      # already carries real organizations is left alone.
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM organizations
+      changes:
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Acme Manufacturing" }
+              - column: { name: is_logo_uploaded, valueBoolean: true }
+              # Exactly one seeded row holds the default flag; the service moves it from here on.
+              - column: { name: is_default_org, valueBoolean: true }
+              - column: { name: user_role, value: "OWNER" }
+              - column: { name: account_created_date, valueDate: "2024-01-15" }
+              - column: { name: time_zone, value: "Asia/Ho_Chi_Minh" }
+              - column: { name: language_code, value: "en" }
+              - column: { name: date_format, value: "dd/MM/yyyy" }
+              - column: { name: field_separator, value: "/" }
+              - column: { name: fiscal_year_start_month, valueNumeric: 1 }
+              - column: { name: tax_group_enabled, valueBoolean: true }
+              - column: { name: user_status, value: "ACTIVE" }
+              - column: { name: contact_name, value: "Nguyen Van An" }
+              - column: { name: industry_type, value: "MANUFACTURING" }
+              - column: { name: create_time, valueDate: "2024-01-15T08:00:00" }
+              - column: { name: last_update_time, valueDate: "2024-01-15T08:00:00" }
+
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Bluewave Logistics" }
+              - column: { name: is_logo_uploaded, valueBoolean: false }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "ADMIN" }
+              - column: { name: account_created_date, valueDate: "2024-03-02" }
+              - column: { name: time_zone, value: "Asia/Singapore" }
+              - column: { name: language_code, value: "en" }
+              - column: { name: date_format, value: "yyyy-MM-dd" }
+              - column: { name: field_separator, value: "-" }
+              - column: { name: fiscal_year_start_month, valueNumeric: 4 }
+              - column: { name: tax_group_enabled, valueBoolean: false }
+              - column: { name: user_status, value: "ACTIVE" }
+              - column: { name: contact_name, value: "Tran Thi Mai" }
+              - column: { name: industry_type, value: "LOGISTICS" }
+              - column: { name: create_time, valueDate: "2024-03-02T09:30:00" }
+              - column: { name: last_update_time, valueDate: "2024-03-02T09:30:00" }
+
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Cedar Retail Group" }
+              - column: { name: is_logo_uploaded, valueBoolean: true }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "MEMBER" }
+              - column: { name: account_created_date, valueDate: "2024-06-20" }
+              - column: { name: time_zone, value: "Europe/Berlin" }
+              - column: { name: language_code, value: "de" }
+              - column: { name: date_format, value: "dd.MM.yyyy" }
+              - column: { name: field_separator, value: "." }
+              - column: { name: fiscal_year_start_month, valueNumeric: 7 }
+              - column: { name: tax_group_enabled, valueBoolean: true }
+              - column: { name: user_status, value: "INACTIVE" }
+              - column: { name: contact_name, value: "Lukas Weber" }
+              - column: { name: industry_type, value: "RETAIL" }
+              - column: { name: create_time, valueDate: "2024-06-20T14:05:00" }
+              - column: { name: last_update_time, valueDate: "2024-07-01T10:15:00" }
+
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Delta Health Services" }
+              - column: { name: is_logo_uploaded, valueBoolean: false }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "ADMIN" }
+              - column: { name: account_created_date, valueDate: "2025-02-10" }
+              - column: { name: time_zone, value: "America/New_York" }
+              - column: { name: language_code, value: "en" }
+              - column: { name: date_format, value: "MM/dd/yyyy" }
+              - column: { name: field_separator, value: "/" }
+              - column: { name: fiscal_year_start_month, valueNumeric: 10 }
+              - column: { name: tax_group_enabled, valueBoolean: false }
+              - column: { name: user_status, value: "ACTIVE" }
+              - column: { name: contact_name, value: "Sarah Collins" }
+              - column: { name: industry_type, value: "HEALTHCARE" }
+              - column: { name: create_time, valueDate: "2025-02-10T11:45:00" }
+              - column: { name: last_update_time, valueDate: "2025-02-10T11:45:00" }
+
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Everline Software" }
+              - column: { name: is_logo_uploaded, valueBoolean: true }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "OWNER" }
+              - column: { name: account_created_date, valueDate: "2025-09-05" }
+              - column: { name: time_zone, value: "UTC" }
+              - column: { name: language_code, value: "en" }
+              - column: { name: date_format, value: "yyyy-MM-dd" }
+              - column: { name: field_separator, value: "-" }
+              - column: { name: fiscal_year_start_month, valueNumeric: 1 }
+              - column: { name: tax_group_enabled, valueBoolean: true }
+              - column: { name: user_status, value: "ACTIVE" }
+              - column: { name: contact_name, value: "Pham Quoc Bao" }
+              - column: { name: industry_type, value: "TECHNOLOGY" }
+              - column: { name: create_time, valueDate: "2025-09-05T07:20:00" }
+              - column: { name: last_update_time, valueDate: "2025-09-05T07:20:00" }
+      rollback:
+        - delete:
+            tableName: organizations
+            where: name IN ('Acme Manufacturing', 'Bluewave Logistics', 'Cedar Retail Group', 'Delta Health Services', 'Everline Software')

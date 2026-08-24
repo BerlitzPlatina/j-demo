@@ -35,7 +35,7 @@ spring:
 
 server:
   # 8080-8082 are taken by the standalone samples in this repo (orm-jpa, blaze, aop-log).
-  port: 8100
+  port: 8080
 
 logging:
   level:

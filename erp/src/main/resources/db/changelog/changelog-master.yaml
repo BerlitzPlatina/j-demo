@@ -3,3 +3,7 @@ databaseChangeLog:
       file: db/changelog/1_organization.yml
   - include:
       file: db/changelog/2_address.yml
+  - include:
+      file: db/changelog/3_seed_organization.yml
+  - include:
+      file: db/changelog/4_contact.yml

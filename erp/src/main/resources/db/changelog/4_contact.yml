@@ -1,0 +1,683 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-contact
+      author: nam
+      changes:
+        - createTable:
+            tableName: contacts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: organization_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              # Human-facing reference (CNT-001234). The payload's ignore_auto_number_generation
+              # is a request-time switch for who assigns this value, so it is not stored.
+              - column:
+                  name: contact_number
+                  type: VARCHAR(50)
+
+              - column:
+                  name: contact_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: company_name
+                  type: VARCHAR(255)
+
+              - column:
+                  name: legal_name
+                  type: VARCHAR(255)
+
+              # customer / vendor.
+              - column:
+                  name: contact_type
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              # business / individual.
+              - column:
+                  name: customer_sub_type
+                  type: VARCHAR(20)
+
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              # Set once the first transaction is posted; blocks some edits from then on.
+              - column:
+                  name: has_transaction
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: credit_limit
+                  type: DECIMAL(19,4)
+
+              - column:
+                  name: is_portal_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: payment_reminder_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: language_code
+                  type: VARCHAR(10)
+
+              - column:
+                  name: is_taxable
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+              # Tax, currency and pricebook masters live outside this module for now, so these
+              # stay plain references without a foreign key until those tables exist.
+              - column:
+                  name: tax_id
+                  type: VARCHAR(50)
+
+              - column:
+                  name: tax_name
+                  type: VARCHAR(100)
+
+              - column:
+                  name: tax_percentage
+                  type: DECIMAL(7,4)
+
+              - column:
+                  name: tds_tax_id
+                  type: VARCHAR(50)
+
+              - column:
+                  name: is_tds_registered
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: tax_exemption_id
+                  type: VARCHAR(50)
+
+              - column:
+                  name: tax_exemption_code
+                  type: VARCHAR(50)
+
+              - column:
+                  name: gst_no
+                  type: VARCHAR(20)
+
+              - column:
+                  name: gst_treatment
+                  type: VARCHAR(50)
+
+              - column:
+                  name: place_of_contact
+                  type: VARCHAR(10)
+
+              - column:
+                  name: pricebook_id
+                  type: BIGINT
+
+              - column:
+                  name: currency_id
+                  type: BIGINT
+
+              - column:
+                  name: currency_code
+                  type: VARCHAR(3)
+
+              - column:
+                  name: currency_symbol
+                  type: VARCHAR(10)
+
+              - column:
+                  name: payment_terms
+                  type: INT
+
+              - column:
+                  name: payment_terms_label
+                  type: VARCHAR(50)
+
+              # Balances are denormalised totals maintained by the transaction side; bcy is the
+              # same amount converted into the organization's base currency.
+              - column:
+                  name: outstanding_receivable_amount
+                  type: DECIMAL(19,4)
+
+              - column:
+                  name: outstanding_receivable_amount_bcy
+                  type: DECIMAL(19,4)
+
+              - column:
+                  name: unused_credits_receivable_amount
+                  type: DECIMAL(19,4)
+
+              - column:
+                  name: unused_credits_receivable_amount_bcy
+                  type: DECIMAL(19,4)
+
+              - column:
+                  name: owner_id
+                  type: BIGINT
+
+              # Points at one row of contact_persons; the constraint is added further down,
+              # once that table exists.
+              - column:
+                  name: primary_contact_person_id
+                  type: BIGINT
+
+              - column:
+                  name: website
+                  type: VARCHAR(255)
+
+              - column:
+                  name: facebook
+                  type: VARCHAR(255)
+
+              - column:
+                  name: twitter
+                  type: VARCHAR(255)
+
+              - column:
+                  name: is_linked_with_crm
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: notes
+                  type: TEXT
+
+              # Backs AbstractAuditModel from the common-jpa jar; carries created_time and
+              # last_modified_time from the payload.
+              - column:
+                  name: create_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_update_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-contact-address
+      author: nam
+      changes:
+        - createTable:
+            tableName: contact_addresses
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: contact_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              # BILLING / SHIPPING - one row each, enforced by the unique constraint below.
+              - column:
+                  name: address_type
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: attention
+                  type: VARCHAR(255)
+
+              - column:
+                  name: street_address1
+                  type: VARCHAR(255)
+
+              - column:
+                  name: street_address2
+                  type: VARCHAR(255)
+
+              - column:
+                  name: city
+                  type: VARCHAR(100)
+
+              - column:
+                  name: state
+                  type: VARCHAR(100)
+
+              - column:
+                  name: state_code
+                  type: VARCHAR(10)
+
+              - column:
+                  name: country
+                  type: VARCHAR(100)
+
+              - column:
+                  name: zip
+                  type: VARCHAR(20)
+
+              - column:
+                  name: phone
+                  type: VARCHAR(50)
+
+              - column:
+                  name: fax
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: create-contact-person
+      author: nam
+      changes:
+        - createTable:
+            tableName: contact_persons
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: contact_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: salutation
+                  type: VARCHAR(20)
+
+              - column:
+                  name: first_name
+                  type: VARCHAR(100)
+
+              - column:
+                  name: last_name
+                  type: VARCHAR(100)
+
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+
+              - column:
+                  name: phone
+                  type: VARCHAR(50)
+
+              - column:
+                  name: mobile
+                  type: VARCHAR(50)
+
+              - column:
+                  name: designation
+                  type: VARCHAR(100)
+
+              - column:
+                  name: department
+                  type: VARCHAR(100)
+
+              - column:
+                  name: skype
+                  type: VARCHAR(100)
+
+              # A contact keeps at most one primary person; contacts.primary_contact_person_id
+              # is the authoritative pointer, this flag mirrors it for straight reads.
+              - column:
+                  name: is_primary_contact
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: enable_portal
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              # Flattened from communication_preference: a fixed pair of channels, not a
+              # growing list, so extra columns beat another child table here.
+              - column:
+                  name: is_sms_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: is_whatsapp_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-contact-opening-balance
+      author: nam
+      changes:
+        - createTable:
+            tableName: contact_opening_balances
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: contact_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              # One opening balance per branch/warehouse the contact trades with.
+              - column:
+                  name: location_id
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: exchange_rate
+                  type: DECIMAL(19,6)
+
+              - column:
+                  name: opening_balance_amount
+                  type: DECIMAL(19,4)
+
+  - changeSet:
+      id: create-contact-custom-field
+      author: nam
+      changes:
+        - createTable:
+            tableName: contact_custom_fields
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: contact_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              # The payload calls this "index"; renamed because INDEX is reserved in MySQL.
+              - column:
+                  name: field_index
+                  type: INT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: label
+                  type: VARCHAR(100)
+
+              - column:
+                  name: value
+                  type: VARCHAR(255)
+
+  - changeSet:
+      id: create-contact-default-template
+      author: nam
+      changes:
+        # One row per contact: a fixed set of template slots rather than open-ended data, so it
+        # stays a 1-1 side table instead of being folded into contacts (19 nullable columns) or
+        # spread over a key/value table that would lose the named slots.
+        - createTable:
+            tableName: contact_default_templates
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: contact_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: invoice_template_id
+                  type: BIGINT
+
+              - column:
+                  name: estimate_template_id
+                  type: BIGINT
+
+              - column:
+                  name: creditnote_template_id
+                  type: BIGINT
+
+              - column:
+                  name: purchaseorder_template_id
+                  type: BIGINT
+
+              - column:
+                  name: salesorder_template_id
+                  type: BIGINT
+
+              - column:
+                  name: retainerinvoice_template_id
+                  type: BIGINT
+
+              - column:
+                  name: paymentthankyou_template_id
+                  type: BIGINT
+
+              - column:
+                  name: retainerinvoice_paymentthankyou_template_id
+                  type: BIGINT
+
+              - column:
+                  name: statement_template_id
+                  type: BIGINT
+
+              - column:
+                  name: bill_template_id
+                  type: BIGINT
+
+              - column:
+                  name: invoice_email_template_id
+                  type: BIGINT
+
+              - column:
+                  name: estimate_email_template_id
+                  type: BIGINT
+
+              - column:
+                  name: creditnote_email_template_id
+                  type: BIGINT
+
+              - column:
+                  name: purchaseorder_email_template_id
+                  type: BIGINT
+
+              - column:
+                  name: salesorder_email_template_id
+                  type: BIGINT
+
+              - column:
+                  name: retainerinvoice_email_template_id
+                  type: BIGINT
+
+              - column:
+                  name: paymentthankyou_email_template_id
+                  type: BIGINT
+
+              - column:
+                  name: retainerinvoice_paymentthankyou_email_template_id
+                  type: BIGINT
+
+              - column:
+                  name: payment_remittance_email_template_id
+                  type: BIGINT
+
+  - changeSet:
+      id: add-contact-foreign-keys
+      author: nam
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: contacts
+            baseColumnNames: organization_id
+            referencedTableName: organizations
+            referencedColumnNames: id
+            constraintName: fk_contact_organization
+
+        # The children die with the contact; nothing below is meaningful on its own.
+        - addForeignKeyConstraint:
+            baseTableName: contact_addresses
+            baseColumnNames: contact_id
+            referencedTableName: contacts
+            referencedColumnNames: id
+            constraintName: fk_contact_address_contact
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: contact_persons
+            baseColumnNames: contact_id
+            referencedTableName: contacts
+            referencedColumnNames: id
+            constraintName: fk_contact_person_contact
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: contact_opening_balances
+            baseColumnNames: contact_id
+            referencedTableName: contacts
+            referencedColumnNames: id
+            constraintName: fk_contact_opening_balance_contact
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: contact_custom_fields
+            baseColumnNames: contact_id
+            referencedTableName: contacts
+            referencedColumnNames: id
+            constraintName: fk_contact_custom_field_contact
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: contact_default_templates
+            baseColumnNames: contact_id
+            referencedTableName: contacts
+            referencedColumnNames: id
+            constraintName: fk_contact_default_template_contact
+            onDelete: CASCADE
+
+        # Points back into a child table, so it can only be added once both sides exist.
+        # SET NULL rather than CASCADE: losing the primary person must not delete the contact.
+        - addForeignKeyConstraint:
+            baseTableName: contacts
+            baseColumnNames: primary_contact_person_id
+            referencedTableName: contact_persons
+            referencedColumnNames: id
+            constraintName: fk_contact_primary_contact_person
+            onDelete: SET NULL
+
+  - changeSet:
+      id: add-contact-unique-constraints
+      author: nam
+      changes:
+        # Contact numbers are only unique inside their own organization.
+        - addUniqueConstraint:
+            tableName: contacts
+            columnNames: organization_id, contact_number
+            constraintName: uk_contact_organization_contact_number
+
+        - addUniqueConstraint:
+            tableName: contact_addresses
+            columnNames: contact_id, address_type
+            constraintName: uk_contact_address_contact_type
+
+        - addUniqueConstraint:
+            tableName: contact_opening_balances
+            columnNames: contact_id, location_id
+            constraintName: uk_contact_opening_balance_location
+
+        - addUniqueConstraint:
+            tableName: contact_custom_fields
+            columnNames: contact_id, field_index
+            constraintName: uk_contact_custom_field_index
+
+        - addUniqueConstraint:
+            tableName: contact_default_templates
+            columnNames: contact_id
+            constraintName: uk_contact_default_template_contact
+
+  - changeSet:
+      id: add-contact-indexes
+      author: nam
+      changes:
+        # Contact lists are always read one organization at a time, filtered by type and status.
+        - createIndex:
+            tableName: contacts
+            indexName: idx_contact_organization_type_status
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: contact_type
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: contacts
+            indexName: idx_contact_organization_name
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: contact_name
+
+        - createIndex:
+            tableName: contact_persons
+            indexName: idx_contact_person_email
+            columns:
+              - column:
+                  name: email
