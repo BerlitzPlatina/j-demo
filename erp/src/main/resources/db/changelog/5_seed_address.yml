@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: seed-addresses
+      author: nam
+      # Development seed data, so the organization API answers with a non-empty `addresses`.
+      #
+      # Deliberately position-based rather than keyed on organization names: `seed-organizations`
+      # only inserts into an empty table, so on a database that already carried organizations it
+      # is recorded as MARK_RAN and none of those names exist. Joining on ROW_NUMBER() instead
+      # gives every organization that is actually there an address.
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        # Runs once, and only while there is nothing to conflict with.
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM addresses
+        # Nothing to hang an address off otherwise - organization_id is NOT NULL.
+        - sqlCheck:
+            expectedResult: 1
+            sql: SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM organizations
+      changes:
+        # The catalog below is keyed by slot 1-5. Organizations are numbered by id and mapped onto
+        # a slot with a modulo, so a sixth organization reuses slot 1 rather than going without.
+        # Slots 1 and 3 carry a second row, which is what makes the one-to-many visible in the
+        # response instead of every organization having exactly one address.
+        - sql:
+            sql: >
+              INSERT INTO addresses
+                  (organization_id, street_address1, street_address2, city, state, country, zip)
+              SELECT o.id, c.street_address1, c.street_address2, c.city, c.state, c.country, c.zip
+              FROM (
+                  SELECT id, ((ROW_NUMBER() OVER (ORDER BY id) - 1) % 5) + 1 AS slot
+                  FROM organizations
+              ) o
+              JOIN (
+                            SELECT 1 AS slot, '12 Nguyen Hue'       AS street_address1, 'Floor 8, Sunwah Tower' AS street_address2, 'Ho Chi Minh City' AS city, 'Ho Chi Minh' AS state, 'Vietnam'        AS country, '70000'  AS zip
+                  UNION ALL SELECT 2,         '1 Raffles Place',                        '#20-01 Tower One',                         'Singapore',                'Central',                 'Singapore',                 '048616'
+                  UNION ALL SELECT 3,         'Friedrichstrasse 88',                    NULL,                                       'Berlin',                   'Berlin',                  'Germany',                   '10117'
+                  UNION ALL SELECT 4,         '350 5th Avenue',                         'Suite 4100',                               'New York',                 'NY',                      'United States',             '10118'
+                  UNION ALL SELECT 5,         '20 Ly Thuong Kiet',                      'Floor 3',                                  'Hanoi',                    'Hanoi',                   'Vietnam',                   '10000'
+                  UNION ALL SELECT 1,         'Lot B3, Tan Thuan EPZ',                  'Warehouse 2',                              'Ho Chi Minh City',         'Ho Chi Minh',             'Vietnam',                   '70000'
+                  UNION ALL SELECT 3,         'Gewerbepark 12',                         'Halle C',                                  'Leipzig',                  'Saxony',                  'Germany',                   '04179'
+              ) c ON c.slot = o.slot
+      rollback:
+        - delete:
+            tableName: addresses
+            where: >
+              street_address1 IN ('12 Nguyen Hue', '1 Raffles Place', 'Friedrichstrasse 88',
+                                  '350 5th Avenue', '20 Ly Thuong Kiet', 'Lot B3, Tan Thuan EPZ',
+                                  'Gewerbepark 12')

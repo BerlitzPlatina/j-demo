@@ -2,6 +2,7 @@ package com.example.erp.organization.dto;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Response class for an organization. A record, so the entity itself never reaches Jackson.
@@ -23,5 +24,6 @@ public record OrganizationResponse(
         String contactName,
         String industryType,
         Date createTime,
-        Date lastUpdateTime) {
+        Date lastUpdateTime,
+        List<AddressResponse> addresses) {
 }

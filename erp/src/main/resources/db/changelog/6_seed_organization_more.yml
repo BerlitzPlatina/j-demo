@@ -1,0 +1,175 @@
+databaseChangeLog:
+  # `seed-organizations` in 3_seed_organization.yml only inserts into an empty table. On a
+  # database that already carried an organization it was recorded as MARK_RAN, so its five rows
+  # were never inserted and never will be - Liquibase considers that changeset done. This file
+  # inserts them separately, guarded on the names rather than on the table being empty, so it is
+  # a no-op on a database where the original seed did run.
+  - changeSet:
+      id: seed-organizations-missed
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: >
+              SELECT COUNT(*) FROM organizations
+              WHERE name IN ('Acme Manufacturing', 'Bluewave Logistics', 'Cedar Retail Group',
+                             'Delta Health Services', 'Everline Software')
+      changes:
+        # Every row goes in with is_default_org = false on purpose. The original seed gave the
+        # flag to Acme, but by now another organization already holds it, and the service treats
+        # "exactly one default" as an invariant. Moving the flag is a business decision, not
+        # something a seed should do behind the caller's back.
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Acme Manufacturing" }
+              - column: { name: is_logo_uploaded, valueBoolean: true }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "OWNER" }
+              - column: { name: account_created_date, valueDate: "2024-01-15" }
+              - column: { name: time_zone, value: "Asia/Ho_Chi_Minh" }
+              - column: { name: language_code, value: "en" }
+              - column: { name: date_format, value: "dd/MM/yyyy" }
+              - column: { name: field_separator, value: "/" }
+              - column: { name: fiscal_year_start_month, valueNumeric: 1 }
+              - column: { name: tax_group_enabled, valueBoolean: true }
+              - column: { name: user_status, value: "ACTIVE" }
+              - column: { name: contact_name, value: "Nguyen Van An" }
+              - column: { name: industry_type, value: "MANUFACTURING" }
+              - column: { name: create_time, valueDate: "2024-01-15T08:00:00" }
+              - column: { name: last_update_time, valueDate: "2024-01-15T08:00:00" }
+
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Bluewave Logistics" }
+              - column: { name: is_logo_uploaded, valueBoolean: false }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "ADMIN" }
+              - column: { name: account_created_date, valueDate: "2024-03-02" }
+              - column: { name: time_zone, value: "Asia/Singapore" }
+              - column: { name: language_code, value: "en" }
+              - column: { name: date_format, value: "yyyy-MM-dd" }
+              - column: { name: field_separator, value: "-" }
+              - column: { name: fiscal_year_start_month, valueNumeric: 4 }
+              - column: { name: tax_group_enabled, valueBoolean: false }
+              - column: { name: user_status, value: "ACTIVE" }
+              - column: { name: contact_name, value: "Tran Thi Mai" }
+              - column: { name: industry_type, value: "LOGISTICS" }
+              - column: { name: create_time, valueDate: "2024-03-02T09:30:00" }
+              - column: { name: last_update_time, valueDate: "2024-03-02T09:30:00" }
+
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Cedar Retail Group" }
+              - column: { name: is_logo_uploaded, valueBoolean: true }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "MEMBER" }
+              - column: { name: account_created_date, valueDate: "2024-06-20" }
+              - column: { name: time_zone, value: "Europe/Berlin" }
+              - column: { name: language_code, value: "de" }
+              - column: { name: date_format, value: "dd.MM.yyyy" }
+              - column: { name: field_separator, value: "." }
+              - column: { name: fiscal_year_start_month, valueNumeric: 7 }
+              - column: { name: tax_group_enabled, valueBoolean: true }
+              - column: { name: user_status, value: "INACTIVE" }
+              - column: { name: contact_name, value: "Lukas Weber" }
+              - column: { name: industry_type, value: "RETAIL" }
+              - column: { name: create_time, valueDate: "2024-06-20T14:05:00" }
+              - column: { name: last_update_time, valueDate: "2024-07-01T10:15:00" }
+
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Delta Health Services" }
+              - column: { name: is_logo_uploaded, valueBoolean: false }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "ADMIN" }
+              - column: { name: account_created_date, valueDate: "2025-02-10" }
+              - column: { name: time_zone, value: "America/New_York" }
+              - column: { name: language_code, value: "en" }
+              - column: { name: date_format, value: "MM/dd/yyyy" }
+              - column: { name: field_separator, value: "/" }
+              - column: { name: fiscal_year_start_month, valueNumeric: 10 }
+              - column: { name: tax_group_enabled, valueBoolean: false }
+              - column: { name: user_status, value: "ACTIVE" }
+              - column: { name: contact_name, value: "Sarah Collins" }
+              - column: { name: industry_type, value: "HEALTHCARE" }
+              - column: { name: create_time, valueDate: "2025-02-10T11:45:00" }
+              - column: { name: last_update_time, valueDate: "2025-02-10T11:45:00" }
+
+        - insert:
+            tableName: organizations
+            columns:
+              - column: { name: name, value: "Everline Software" }
+              - column: { name: is_logo_uploaded, valueBoolean: true }
+              - column: { name: is_default_org, valueBoolean: false }
+              - column: { name: user_role, value: "OWNER" }
+              - column: { name: account_created_date, valueDate: "2025-09-05" }
+              - column: { name: time_zone, value: "UTC" }
+              - column: { name: language_code, value: "en" }
+              - column: { name: date_format, value: "yyyy-MM-dd" }
+              - column: { name: field_separator, value: "-" }
+              - column: { name: fiscal_year_start_month, valueNumeric: 1 }
+              - column: { name: tax_group_enabled, valueBoolean: true }
+              - column: { name: user_status, value: "ACTIVE" }
+              - column: { name: contact_name, value: "Pham Quoc Bao" }
+              - column: { name: industry_type, value: "TECHNOLOGY" }
+              - column: { name: create_time, valueDate: "2025-09-05T07:20:00" }
+              - column: { name: last_update_time, valueDate: "2025-09-05T07:20:00" }
+      rollback:
+        - delete:
+            tableName: organizations
+            where: >
+              name IN ('Acme Manufacturing', 'Bluewave Logistics', 'Cedar Retail Group',
+                       'Delta Health Services', 'Everline Software')
+
+  # 5_seed_address.yml only fires while `addresses` is empty, so the organizations added above
+  # would have none. This fills in whichever organizations still have no address, which covers
+  # them without touching the ones already seeded.
+  - changeSet:
+      id: seed-addresses-for-organizations-without-any
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+              FROM organizations o
+              WHERE NOT EXISTS (SELECT 1 FROM addresses a WHERE a.organization_id = o.id)
+      changes:
+        # Same shape as 5_seed_address.yml - organizations numbered by id, mapped onto a slot
+        # with a modulo so the catalog never runs out. Different cities, so it stays obvious in
+        # the data which changeset produced which row. Slots 2 and 4 carry a second address, so
+        # the one-to-many is visible on more than one organization.
+        - sql:
+            sql: >
+              INSERT INTO addresses
+                  (organization_id, street_address1, street_address2, city, state, country, zip)
+              SELECT o.id, c.street_address1, c.street_address2, c.city, c.state, c.country, c.zip
+              FROM (
+                  SELECT id, ((ROW_NUMBER() OVER (ORDER BY id) - 1) % 5) + 1 AS slot
+                  FROM organizations o
+                  WHERE NOT EXISTS (SELECT 1 FROM addresses a WHERE a.organization_id = o.id)
+              ) o
+              JOIN (
+                            SELECT 1 AS slot, '45 Le Duan'          AS street_address1, 'Block A'      AS street_address2, 'Da Nang'   AS city, 'Da Nang'    AS state, 'Vietnam'        AS country, '50000' AS zip
+                  UNION ALL SELECT 2,         '77 Orchard Road',                        'Level 12',                        'Singapore',            'Central',                'Singapore',                 '238858'
+                  UNION ALL SELECT 3,         'Maximilianstrasse 5',                    NULL,                              'Munich',               'Bavaria',                'Germany',                   '80539'
+                  UNION ALL SELECT 4,         '1200 Market Street',                     'Floor 6',                         'Philadelphia',         'PA',                     'United States',             '19107'
+                  UNION ALL SELECT 5,         '9 Tran Phu',                             'Suite 21',                        'Hue',                  'Thua Thien Hue',         'Vietnam',                   '49000'
+                  UNION ALL SELECT 2,         '3 Changi Business Park',                 'Warehouse 1',                     'Singapore',            'East',                   'Singapore',                 '486051'
+                  UNION ALL SELECT 4,         '500 Delaware Avenue',                    'Depot 3',                         'Wilmington',           'DE',                     'United States',             '19801'
+              ) c ON c.slot = o.slot
+      rollback:
+        - delete:
+            tableName: addresses
+            where: >
+              street_address1 IN ('45 Le Duan', '77 Orchard Road', 'Maximilianstrasse 5',
+                                  '1200 Market Street', '9 Tran Phu', '3 Changi Business Park',
+                                  '500 Delaware Avenue')

@@ -7,3 +7,7 @@ databaseChangeLog:
       file: db/changelog/3_seed_organization.yml
   - include:
       file: db/changelog/4_contact.yml
+  - include:
+      file: db/changelog/5_seed_address.yml
+  - include:
+      file: db/changelog/6_seed_organization_more.yml

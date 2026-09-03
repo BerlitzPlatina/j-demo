@@ -1,10 +1,14 @@
 package com.example.erp.organization.mapper;
 
+import com.example.erp.organization.dto.AddressResponse;
 import com.example.erp.organization.dto.OrganizationCreateRequest;
 import com.example.erp.organization.dto.OrganizationPatchRequest;
 import com.example.erp.organization.dto.OrganizationResponse;
 import com.example.erp.organization.dto.OrganizationUpdateRequest;
+import com.example.erp.organization.entity.Address;
 import com.example.erp.organization.entity.Organization;
+
+import java.util.List;
 
 /**
  * Entity to response, and request to entity. Kept in one place so no controller ever serializes
@@ -33,7 +37,27 @@ public final class OrganizationMapper {
                 organization.getContactName(),
                 organization.getIndustryType(),
                 organization.getCreateTime(),
-                organization.getLastUpdateTime());
+                organization.getLastUpdateTime(),
+                toAddressResponses(organization.getAddresses()));
+    }
+
+    /**
+     * The addresses are lazy, so this must run inside the transaction that loaded the
+     * organization - which is why mapping happens in the service and not in the controller.
+     */
+    private static List<AddressResponse> toAddressResponses(List<Address> addresses) {
+        return addresses == null ? List.of() : addresses.stream().map(OrganizationMapper::toResponse).toList();
+    }
+
+    public static AddressResponse toResponse(Address address) {
+        return new AddressResponse(
+                address.getId(),
+                address.getStreetAddress1(),
+                address.getStreetAddress2(),
+                address.getCity(),
+                address.getState(),
+                address.getCountry(),
+                address.getZip());
     }
 
     /** The NOT NULL flags fall back to false so an omitted field is not a constraint violation. */

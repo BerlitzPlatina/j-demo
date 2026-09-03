@@ -16,7 +16,7 @@ spring:
     # Never let Hibernate touch the schema - liquibase is the only thing that changes it.
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    # show-sql: true
     # Off on purpose: a lazy relation touched during JSON serialization should fail loudly
     # rather than turn into a hidden N+1 in production.
     open-in-view: false
