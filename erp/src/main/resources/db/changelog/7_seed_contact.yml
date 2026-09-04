@@ -1,0 +1,273 @@
+databaseChangeLog:
+  # Development seed data for the contact module and its child tables.
+  #
+  # Every changeSet below follows the lesson of 6_seed_organization_more.yml: guard on the rows
+  # this file owns (contact numbers CNT-000001..CNT-000006) rather than on a table being empty,
+  # and insert with a NOT EXISTS. A changeSet that is skipped is recorded as MARK_RAN and never
+  # reconsidered, so "the table was empty at the time" is not a condition worth building on.
+  #
+  # The catalog is cross joined against `organizations`, so every organization gets the same six
+  # contacts. contacts.contact_number is unique per organization, not globally, so the numbers
+  # repeating across organizations is exactly what the constraint allows. Contact person emails
+  # repeat for the same reason - that column carries an index, not a unique constraint.
+  #
+  # MySQL-specific SQL (multi-table UPDATE), like the ROW_NUMBER() seeds that came before it.
+
+  - changeSet:
+      id: seed-contacts
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        # Nothing to hang a contact off otherwise - organization_id is NOT NULL.
+        - sqlCheck:
+            expectedResult: 1
+            sql: SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM organizations
+      changes:
+        # The columns that carry no interesting variation are set once in the outer SELECT:
+        # every seeded contact is taxable at a flat 10% VAT, has payment reminders on, is not
+        # TDS registered and is not linked with a CRM. The *_bcy balances equal their base
+        # amounts because the seed assumes an exchange rate of 1.
+        - sql:
+            sql: >
+              INSERT INTO contacts
+                  (organization_id, contact_number, contact_name, company_name, legal_name,
+                   contact_type, customer_sub_type, status, has_transaction, credit_limit,
+                   is_portal_enabled, payment_reminder_enabled, language_code, is_taxable,
+                   tax_name, tax_percentage, is_tds_registered, currency_code, currency_symbol,
+                   payment_terms, payment_terms_label,
+                   outstanding_receivable_amount, outstanding_receivable_amount_bcy,
+                   unused_credits_receivable_amount, unused_credits_receivable_amount_bcy,
+                   website, notes, is_linked_with_crm, create_time, last_update_time)
+              SELECT o.id, c.contact_number, c.contact_name, c.company_name, c.legal_name,
+                     c.contact_type, c.customer_sub_type, c.status, c.has_transaction,
+                     c.credit_limit, c.is_portal_enabled, TRUE, 'en', TRUE,
+                     'VAT 10%', 10.0000, FALSE, c.currency_code, c.currency_symbol,
+                     c.payment_terms, c.payment_terms_label,
+                     c.outstanding, c.outstanding, c.unused_credits, c.unused_credits,
+                     c.website, c.notes, FALSE, c.created_at, c.created_at
+              FROM organizations o
+              CROSS JOIN (
+                            SELECT 'CNT-000001' AS contact_number, 'Global Foods Trading'   AS contact_name, 'Global Foods Trading Co., Ltd' AS company_name, 'Global Foods Trading Company Limited' AS legal_name, 'customer' AS contact_type, 'business'   AS customer_sub_type, 'ACTIVE'   AS status, TRUE  AS has_transaction, 50000.0000 AS credit_limit, TRUE  AS is_portal_enabled, 'VND' AS currency_code, '₫' AS currency_symbol,  30 AS payment_terms, 'Net 30' AS payment_terms_label, 12500.0000 AS outstanding,    0.0000 AS unused_credits, 'https://globalfoods.example.com' AS website, 'Key wholesale account; orders weekly, invoices consolidated monthly.' AS notes, '2024-02-05 09:15:00' AS created_at
+                  UNION ALL SELECT 'CNT-000002',                   'Hanoi Home Appliances',                 'Hanoi Home Appliances JSC',                     'Hanoi Home Appliances Joint Stock Company',                       'customer',                'business',                      'ACTIVE',              TRUE,                    25000.0000,              FALSE,                     'VND',                '₫',                            15,                'Net 15',                                3200.0000,                    500.0000,                'https://hha.example.com',                                    'Retail chain; ships to two warehouses, so it carries a shipping address of its own.',   '2024-04-18 10:40:00'
+                  UNION ALL SELECT 'CNT-000003',                   'Le Minh Tuan',                          NULL,                                            NULL,                                                              'customer',                'individual',                    'ACTIVE',              FALSE,                   0.0000,                  FALSE,                     'VND',                '₫',                            0,                 'Due on Receipt',                        0.0000,                       0.0000,                  NULL,                                                         'Walk-in customer, no transaction posted yet, so nothing blocks editing this row.',      '2025-01-09 08:05:00'
+                  UNION ALL SELECT 'CNT-000004',                   'Pacific Packaging Supply',              'Pacific Packaging Supply Pte Ltd',              'Pacific Packaging Supply Private Limited',                        'vendor',                  NULL,                            'ACTIVE',              TRUE,                    0.0000,                  FALSE,                     'SGD',                'S$',                             45,                'Net 45',                                0.0000,                       0.0000,                  'https://pacificpack.example.com',                            'Primary carton supplier; prices agreed per quarter.',                                   '2024-06-27 13:20:00'
+                  UNION ALL SELECT 'CNT-000005',                   'Rheinwerk Components',                  'Rheinwerk Components GmbH',                     'Rheinwerk Components Gesellschaft mit beschraenkter Haftung',      'vendor',                  NULL,                            'ACTIVE',              TRUE,                    0.0000,                  FALSE,                     'EUR',                '€',                              60,                'Net 60',                                0.0000,                       0.0000,                  'https://rheinwerk.example.com',                              'Imported spare parts; lead time six weeks, so orders are raised a quarter ahead.',       '2024-09-11 15:00:00'
+                  UNION ALL SELECT 'CNT-000006',                   'Northbridge Analytics',                 'Northbridge Analytics Inc.',                    'Northbridge Analytics Incorporated',                              'customer',                'business',                      'INACTIVE',            TRUE,                    10000.0000,              FALSE,                     'USD',                '$',                              30,                'Net 30',                                0.0000,                       1750.0000,               'https://northbridge.example.com',                            'Contract ended; kept inactive rather than deleted because it still carries credits.',    '2025-03-24 11:30:00'
+              ) c
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM contacts x
+                  WHERE x.organization_id = o.id AND x.contact_number = c.contact_number
+              )
+      rollback:
+        # The children go with it: every child table's foreign key is ON DELETE CASCADE, and
+        # contacts.primary_contact_person_id is ON DELETE SET NULL.
+        - delete:
+            tableName: contacts
+            where: >
+              contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000003',
+                                 'CNT-000004', 'CNT-000005', 'CNT-000006')
+
+  - changeSet:
+      id: seed-contact-persons
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM contacts
+              WHERE contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000003',
+                                       'CNT-000004', 'CNT-000005', 'CNT-000006')
+      changes:
+        # Exactly one person per contact carries is_primary_contact; CNT-000001 and CNT-000004
+        # get a second, non-primary person so the one-to-many is visible in a response.
+        - sql:
+            sql: >
+              INSERT INTO contact_persons
+                  (contact_id, salutation, first_name, last_name, email, phone, mobile,
+                   designation, department, is_primary_contact, enable_portal,
+                   is_sms_enabled, is_whatsapp_enabled)
+              SELECT ct.id, p.salutation, p.first_name, p.last_name, p.email, p.phone, p.mobile,
+                     p.designation, p.department, p.is_primary_contact, p.enable_portal,
+                     p.is_sms_enabled, p.is_whatsapp_enabled
+              FROM contacts ct
+              JOIN (
+                            SELECT 'CNT-000001' AS contact_number, 'Mr.' AS salutation, 'Dao'    AS first_name, 'Van Khanh' AS last_name, 'khanh.dao@globalfoods.example.com'      AS email, '+84 28 3822 1100' AS phone, '+84 903 111 222' AS mobile, 'Purchasing Manager'  AS designation, 'Purchasing' AS department, TRUE  AS is_primary_contact, TRUE  AS enable_portal, TRUE  AS is_sms_enabled, TRUE  AS is_whatsapp_enabled
+                  UNION ALL SELECT 'CNT-000001',                   'Ms.',                        'Vo',                'Thi Hoa',             'hoa.vo@globalfoods.example.com',                  '+84 28 3822 1101',                    '+84 903 111 333',           'Accounts Payable',                          'Finance',                 FALSE,                      FALSE,                 FALSE,                  FALSE
+                  UNION ALL SELECT 'CNT-000002',                   'Ms.',                        'Nguyen',            'Thu Trang',           'trang.nguyen@hha.example.com',                    '+84 24 3971 5500',                    '+84 912 445 667',           'Category Buyer',                            'Merchandising',           TRUE,                       TRUE,                  TRUE,                   FALSE
+                  UNION ALL SELECT 'CNT-000003',                   'Mr.',                        'Le',                'Minh Tuan',           'tuan.le@example.com',                             NULL,                                  '+84 987 654 321',           NULL,                                        NULL,                      TRUE,                       FALSE,                 TRUE,                   TRUE
+                  UNION ALL SELECT 'CNT-000004',                   'Mr.',                        'Ravi',              'Menon',               'ravi.menon@pacificpack.example.com',              '+65 6555 0180',                       '+65 8123 4567',             'Account Director',                          'Sales',                   TRUE,                       FALSE,                 FALSE,                  TRUE
+                  UNION ALL SELECT 'CNT-000004',                   'Ms.',                        'Chloe',             'Tan',                 'chloe.tan@pacificpack.example.com',               '+65 6555 0181',                       NULL,                        'Logistics Coordinator',                     'Operations',              FALSE,                      FALSE,                 FALSE,                  FALSE
+                  UNION ALL SELECT 'CNT-000005',                   'Mr.',                        'Jonas',             'Brandt',              'jonas.brandt@rheinwerk.example.com',              '+49 341 55 8890',                     NULL,                        'Export Sales',                              'Sales',                   TRUE,                       FALSE,                 FALSE,                  FALSE
+                  UNION ALL SELECT 'CNT-000006',                   'Mrs.',                       'Emily',             'Carter',              'emily.carter@northbridge.example.com',            '+1 212 555 0142',                     '+1 646 555 0199',           'Finance Controller',                        'Finance',                 TRUE,                       FALSE,                 FALSE,                  FALSE
+              ) p ON p.contact_number = ct.contact_number
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM contact_persons cp
+                  WHERE cp.contact_id = ct.id AND cp.email = p.email
+              )
+      rollback:
+        - sql:
+            sql: >
+              DELETE FROM contact_persons
+              WHERE contact_id IN (
+                  SELECT id FROM contacts
+                  WHERE contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000003',
+                                           'CNT-000004', 'CNT-000005', 'CNT-000006')
+              )
+
+  - changeSet:
+      id: link-contact-primary-contact-person
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+              FROM contacts ct
+              JOIN contact_persons cp ON cp.contact_id = ct.id AND cp.is_primary_contact = TRUE
+              WHERE ct.primary_contact_person_id IS NULL
+      changes:
+        # contacts.primary_contact_person_id is the authoritative pointer and the flag on
+        # contact_persons only mirrors it, so it has to be filled in once the persons exist.
+        # It could not be part of the insert above: the foreign key points into a table whose
+        # rows did not exist yet.
+        - sql:
+            sql: >
+              UPDATE contacts ct
+              JOIN contact_persons cp ON cp.contact_id = ct.id AND cp.is_primary_contact = TRUE
+              SET ct.primary_contact_person_id = cp.id
+              WHERE ct.primary_contact_person_id IS NULL
+      rollback:
+        - sql:
+            sql: >
+              UPDATE contacts SET primary_contact_person_id = NULL
+              WHERE contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000003',
+                                       'CNT-000004', 'CNT-000005', 'CNT-000006')
+
+  - changeSet:
+      id: seed-contact-addresses
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM contacts
+              WHERE contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000003',
+                                       'CNT-000004', 'CNT-000005', 'CNT-000006')
+      changes:
+        # One BILLING row each - the unique constraint on (contact_id, address_type) allows no
+        # more - plus a SHIPPING row for the three contacts that actually receive goods.
+        - sql:
+            sql: >
+              INSERT INTO contact_addresses
+                  (contact_id, address_type, attention, street_address1, street_address2,
+                   city, state, state_code, country, zip, phone, fax)
+              SELECT ct.id, a.address_type, a.attention, a.street_address1, a.street_address2,
+                     a.city, a.state, a.state_code, a.country, a.zip, a.phone, a.fax
+              FROM contacts ct
+              JOIN (
+                            SELECT 'CNT-000001' AS contact_number, 'BILLING'  AS address_type, 'Accounts Payable'   AS attention, '158 Nguyen Thi Minh Khai' AS street_address1, 'Floor 5'      AS street_address2, 'Ho Chi Minh City' AS city, 'Ho Chi Minh'     AS state, 'SG'  AS state_code, 'Vietnam'       AS country, '70000'  AS zip, '+84 28 3822 1100' AS phone, '+84 28 3822 1199' AS fax
+                  UNION ALL SELECT 'CNT-000001',                   'SHIPPING',                 'Warehouse Manager',              'Lot C7, Vinh Loc IP',                        'Gate 2',                            'Ho Chi Minh City',            'Ho Chi Minh',              'SG',                    'Vietnam',                 '70000',           '+84 28 3822 1120',                    NULL
+                  UNION ALL SELECT 'CNT-000002',                   'BILLING',                  'Finance Department',             '25 Tran Duy Hung',                           'Suite 902',                         'Hanoi',                       'Hanoi',                    'HN',                    'Vietnam',                 '10000',           '+84 24 3971 5500',                    NULL
+                  UNION ALL SELECT 'CNT-000002',                   'SHIPPING',                 'Store Operations',               'KM 12, Thang Long Boulevard',                'Distribution Centre 1',             'Hanoi',                       'Hanoi',                    'HN',                    'Vietnam',                 '10000',           '+84 24 3971 5522',                    NULL
+                  UNION ALL SELECT 'CNT-000003',                   'BILLING',                  NULL,                             '42/7 Dien Bien Phu',                         NULL,                                'Da Nang',                     'Da Nang',                  'DN',                    'Vietnam',                 '50000',           '+84 987 654 321',                     NULL
+                  UNION ALL SELECT 'CNT-000004',                   'BILLING',                  'Accounts Receivable',            '18 Kallang Avenue',                          '#07-12 Aperia Tower 1',             'Singapore',                   'Central',                  'SG',                    'Singapore',               '339415',          '+65 6555 0180',                       '+65 6555 0189'
+                  UNION ALL SELECT 'CNT-000004',                   'SHIPPING',                 'Despatch',                       '3 Changi North Street 2',                    'Block B',                           'Singapore',                   'East',                     'SG',                    'Singapore',               '498827',          '+65 6555 0184',                       NULL
+                  UNION ALL SELECT 'CNT-000005',                   'BILLING',                  'Buchhaltung',                    'Gewerbepark 12',                             'Halle C',                           'Leipzig',                     'Saxony',                   'SN',                    'Germany',                 '04179',           '+49 341 55 8890',                     '+49 341 55 8899'
+                  UNION ALL SELECT 'CNT-000006',                   'BILLING',                  'Emily Carter',                   '350 5th Avenue',                             'Suite 4100',                        'New York',                    'NY',                       'NY',                    'United States',           '10118',           '+1 212 555 0142',                     NULL
+              ) a ON a.contact_number = ct.contact_number
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM contact_addresses x
+                  WHERE x.contact_id = ct.id AND x.address_type = a.address_type
+              )
+      rollback:
+        - sql:
+            sql: >
+              DELETE FROM contact_addresses
+              WHERE contact_id IN (
+                  SELECT id FROM contacts
+                  WHERE contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000003',
+                                           'CNT-000004', 'CNT-000005', 'CNT-000006')
+              )
+
+  - changeSet:
+      id: seed-contact-opening-balances
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM contacts
+              WHERE contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000006')
+      changes:
+        # Only the contacts that carry a balance get one, at the single 'HQ' location. The
+        # amount is taken from the contact so the two numbers cannot disagree, and the exchange
+        # rate is 1 because every seeded balance is already in the organization's own currency.
+        - sql:
+            sql: >
+              INSERT INTO contact_opening_balances
+                  (contact_id, location_id, exchange_rate, opening_balance_amount)
+              SELECT ct.id, 'HQ', 1.000000,
+                     ct.outstanding_receivable_amount - ct.unused_credits_receivable_amount
+              FROM contacts ct
+              WHERE ct.contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000006')
+                AND NOT EXISTS (
+                    SELECT 1 FROM contact_opening_balances b
+                    WHERE b.contact_id = ct.id AND b.location_id = 'HQ'
+                )
+      rollback:
+        - sql:
+            sql: >
+              DELETE FROM contact_opening_balances
+              WHERE location_id = 'HQ' AND contact_id IN (
+                  SELECT id FROM contacts
+                  WHERE contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000006')
+              )
+
+  - changeSet:
+      id: seed-contact-custom-fields
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM contacts
+              WHERE contact_number IN ('CNT-000001', 'CNT-000002', 'CNT-000004', 'CNT-000005')
+      changes:
+        # field_index is unique per contact, so the catalog numbers them from 1 within each one.
+        - sql:
+            sql: >
+              INSERT INTO contact_custom_fields (contact_id, field_index, label, value)
+              SELECT ct.id, f.field_index, f.label, f.value
+              FROM contacts ct
+              JOIN (
+                            SELECT 'CNT-000001' AS contact_number, 1 AS field_index, 'Sales Region'      AS label, 'South'          AS value
+                  UNION ALL SELECT 'CNT-000001',                   2,                'Delivery Window',            'Mon-Wed 08:00-11:00'
+                  UNION ALL SELECT 'CNT-000002',                   1,                'Sales Region',               'North'
+                  UNION ALL SELECT 'CNT-000004',                   1,                'Supplier Tier',              'Tier 1'
+                  UNION ALL SELECT 'CNT-000004',                   2,                'Audit Due',                  '2026-03-31'
+                  UNION ALL SELECT 'CNT-000005',                   1,                'Supplier Tier',              'Tier 2'
+              ) f ON f.contact_number = ct.contact_number
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM contact_custom_fields x
+                  WHERE x.contact_id = ct.id AND x.field_index = f.field_index
+              )
+      rollback:
+        - sql:
+            sql: >
+              DELETE FROM contact_custom_fields
+              WHERE contact_id IN (
+                  SELECT id FROM contacts
+                  WHERE contact_number IN ('CNT-000001', 'CNT-000002',
+                                           'CNT-000004', 'CNT-000005')
+              )

@@ -12,9 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
-// wtf
 @Entity
 @Table(name = "contacts")
 @Data
@@ -26,115 +24,122 @@ import java.time.LocalDate;
 public class Contact extends AbstractAuditModel {
 
     @Column(name = "organization_id")
-    private Long organization_id;
+    private Long organizationId;
 
-    @Column(length = 50)
-    private String contact_number;
+    @Column(name = "contact_number", length = 50)
+    private String contactNumber;
 
-    @Column(length = 255, nullable = false)
-    private String contact_name;
+    @Column(name = "contact_name", length = 255, nullable = false)
+    private String contactName;
 
-    @Column(length = 255)
-    private String company_name;
+    @Column(name = "company_name", length = 255)
+    private String companyName;
 
-    @Column(length = 255)
-    private String legal_name;
+    @Column(name = "legal_name", length = 255)
+    private String legalName;
 
-    @Column(length = 20, nullable = false)
-    private String contact_type;
+    @Column(name = "contact_type", length = 20, nullable = false)
+    private String contactType;
 
-    @Column(length = 20)
-    private String customer_sub_type;
+    @Column(name = "customer_sub_type", length = 20)
+    private String customerSubType;
 
-    @Column(length = 20)
+    @Column(name = "status", length = 20)
     private String status;
 
-    @Column(nullable = false)
-    private Boolean has_transaction;
+    @Column(name = "has_transaction", nullable = false)
+    private Boolean hasTransaction;
 
-    @Column(precision = 19, scale = 4)
-    private BigDecimal credit_limit;
+    @Column(name = "credit_limit", precision = 19, scale = 4)
+    private BigDecimal creditLimit;
 
-    @Column(nullable = false)
-    private Boolean payment_reminder_enabled;
+    @Column(name = "payment_reminder_enabled", nullable = false)
+    private Boolean paymentReminderEnabled;
 
-    @Column(length = 10)
-    private String language_code;
+    @Column(name = "language_code", length = 10)
+    private String languageCode;
 
-    @Column(nullable = false)
-    private Boolean is_taxable;
+    @Column(name = "is_taxable", nullable = false)
+    private Boolean isTaxable;
 
-    @Column(length = 50)
-    private String tax_id;
+    @Column(name = "tax_id", length = 50)
+    private String taxId;
 
-    @Column(length = 100)
-    private String tax_name;
+    @Column(name = "tax_name", length = 100)
+    private String taxName;
 
-    @Column(precision = 7, scale = 4)
-    private BigDecimal tax_percentage;
+    @Column(name = "tax_percentage", precision = 7, scale = 4)
+    private BigDecimal taxPercentage;
 
-    @Column(length = 50)
-    private String tds_tax_id;
+    @Column(name = "tds_tax_id", length = 50)
+    private String tdsTaxId;
 
-    @Column(nullable = false)
-    private Boolean is_tds_registered;
+    @Column(name = "is_tds_registered", nullable = false)
+    private Boolean isTdsRegistered;
 
-    @Column(length = 50)
-    private String tax_exemption_id;
+    @Column(name = "tax_exemption_id", length = 50)
+    private String taxExemptionId;
 
-    @Column(length = 50)
-    private String tax_exemption_code;
+    @Column(name = "tax_exemption_code", length = 50)
+    private String taxExemptionCode;
 
-    @Column(length = 20)
-    private String gst_no;
+    @Column(name = "gst_no", length = 20)
+    private String gstNo;
 
-    @Column(length = 50)
-    private String gst_treatment;
+    @Column(name = "gst_treatment", length = 50)
+    private String gstTreatment;
 
-    @Column(length = 10)
-    private String place_of_contact;
+    @Column(name = "place_of_contact", length = 10)
+    private String placeOfContact;
 
-    private Long pricebook_id;
-    private Long currency_id;
+    @Column(name = "pricebook_id")
+    private Long pricebookId;
 
-    @Column(length = 3)
-    private String currency_code;
+    @Column(name = "currency_id")
+    private Long currencyId;
 
-    @Column(length = 10)
-    private String currency_symbol;
+    @Column(name = "currency_code", length = 3)
+    private String currencyCode;
 
-    private Integer payment_terms;
+    @Column(name = "currency_symbol", length = 10)
+    private String currencySymbol;
 
-    @Column(length = 50)
-    private String payment_terms_label;
+    @Column(name = "payment_terms")
+    private Integer paymentTerms;
 
-    @Column(precision = 19, scale = 4)
-    private BigDecimal outstanding_receivable_amount;
+    @Column(name = "payment_terms_label", length = 50)
+    private String paymentTermsLabel;
 
-    @Column(precision = 19, scale = 4)
-    private BigDecimal outstanding_receivable_amount_bcy;
+    @Column(name = "outstanding_receivable_amount", precision = 19, scale = 4)
+    private BigDecimal outstandingReceivableAmount;
 
-    @Column(precision = 19, scale = 4)
-    private BigDecimal unused_credits_receivable_amount;
+    @Column(name = "outstanding_receivable_amount_bcy", precision = 19, scale = 4)
+    private BigDecimal outstandingReceivableAmountBcy;
 
-    @Column(precision = 19, scale = 4)
-    private BigDecimal unused_credits_receivable_amount_bcy;
+    @Column(name = "unused_credits_receivable_amount", precision = 19, scale = 4)
+    private BigDecimal unusedCreditsReceivableAmount;
 
-    private Long owner_id;
-    private Long primary_contact_person_id;
+    @Column(name = "unused_credits_receivable_amount_bcy", precision = 19, scale = 4)
+    private BigDecimal unusedCreditsReceivableAmountBcy;
 
-    @Column(length = 255)
+    @Column(name = "owner_id")
+    private Long ownerId;
+
+    @Column(name = "primary_contact_person_id")
+    private Long primaryContactPersonId;
+
+    @Column(name = "website", length = 255)
     private String website;
 
-    @Column(length = 255)
+    @Column(name = "facebook", length = 255)
     private String facebook;
 
-    @Column(length = 255)
+    @Column(name = "twitter", length = 255)
     private String twitter;
 
-    @Column(nullable = false)
-    private Boolean is_linked_with_crm;
+    @Column(name = "is_linked_with_crm", nullable = false)
+    private Boolean isLinkedWithCrm;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 }

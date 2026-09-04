@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/5_seed_address.yml
   - include:
       file: db/changelog/6_seed_organization_more.yml
+  - include:
+      file: db/changelog/7_seed_contact.yml
