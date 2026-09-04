@@ -1,5 +1,9 @@
 package com.example.erp.contact.dto;
 
-public record ContactCreateRequest() {
+import jakarta.validation.constraints.NotBlank;
 
+public record ContactCreateRequest(
+                @NotBlank String contactName,
+                @NotBlank String contactType,
+                @NotBlank String status) {
 }

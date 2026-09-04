@@ -1,5 +1,6 @@
 package com.example.erp.contact.mapper;
 
+import com.example.erp.contact.dto.ContactCreateRequest;
 import com.example.erp.contact.dto.ContactResponse;
 import com.example.erp.contact.entity.Contact;
 
@@ -40,5 +41,18 @@ public final class ContactMapper {
                 contact.getOutstandingReceivableAmount(),
                 contact.getUnusedCreditsReceivableAmount(),
                 contact.getOwnerId());
+    }
+
+    public static Contact toEntity(ContactCreateRequest request, Long organizationId) {
+        return Contact.builder().contactName(request.contactName())
+                .hasTransaction(true)
+                .paymentReminderEnabled(true)
+                .isTaxable(true)
+                .isTdsRegistered(true)
+                .isLinkedWithCrm(true)
+                .organizationId(organizationId)
+                .contactType(request.contactType())
+                .status(request.status())
+                .build();
     }
 }

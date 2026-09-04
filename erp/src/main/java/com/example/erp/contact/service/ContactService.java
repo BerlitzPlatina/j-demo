@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.common.web.dto.PageResponse;
+import com.example.erp.contact.dto.ContactCreateRequest;
 import com.example.erp.contact.dto.ContactResponse;
 import com.example.erp.contact.dto.ContactSearchRequest;
 import com.example.erp.contact.entity.Contact;
@@ -38,6 +39,12 @@ public class ContactService {
     public PageResponse<ContactResponse> search(ContactSearchRequest request, Pageable pageable) {
         Page<Contact> page = contactDao.findAll(ContactSpecifications.from(request), withSafeSort(pageable));
         return PageResponse.from(page, ContactMapper::toResponse);
+    }
+
+    @Transactional
+    public ContactResponse create(ContactCreateRequest request, Long organizationId) {
+        Contact saved = contactDao.save(ContactMapper.toEntity(request, organizationId));
+        return ContactMapper.toResponse(saved);
     }
 
     private Pageable withSafeSort(Pageable pageable) {
