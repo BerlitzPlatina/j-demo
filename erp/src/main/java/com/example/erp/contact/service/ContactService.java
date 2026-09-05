@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.common.web.dto.PageResponse;
+import com.example.common.web.exception.ResourceNotFoundException;
 import com.example.erp.contact.dto.ContactCreateRequest;
 import com.example.erp.contact.dto.ContactResponse;
 import com.example.erp.contact.dto.ContactSearchRequest;
@@ -45,6 +46,22 @@ public class ContactService {
     public ContactResponse create(ContactCreateRequest request, Long organizationId) {
         Contact saved = contactDao.save(ContactMapper.toEntity(request, organizationId));
         return ContactMapper.toResponse(saved);
+    }
+
+    public ContactResponse getById(Long id) {
+        return ContactMapper
+                .toResponse(contactDao.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Contact not found with id: " + id)));
+    }
+
+    @Transactional
+    public ContactResponse update(ContactCreateRequest request, Long contactId) {
+        Contact contact = contactDao.findById(contactId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contact not found with id: " + contactId));
+        if (request.contactName() != null) {
+            contact.setContactName(request.contactName());
+        }
+        return ContactMapper.toResponse(contact);
     }
 
     private Pageable withSafeSort(Pageable pageable) {

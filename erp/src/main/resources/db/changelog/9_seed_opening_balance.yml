@@ -1,0 +1,145 @@
+databaseChangeLog:
+  # Development seed data for accounts, opening_balances and the join between them.
+  #
+  # Both entities are root tables - the payload points at no contact and no organization - so
+  # there is no parent to join to and no CROSS JOIN organizations here. Every changeSet guards
+  # on the rows it owns and inserts with a NOT EXISTS on the same key, so re-running is a no-op;
+  # a changeSet whose precondition fails is MARK_RAN forever, the mistake 6_seed_organization_more.yml
+  # had to repair.
+  #
+  # The keys are the business keys the schema declares - account_name, and (location_id,
+  # balance_date) - not upstream ids, because none are stored. That is deliberate: an earlier
+  # version of this seed keyed its guards and rollbacks on upstream id columns, and when those
+  # columns were dropped every rollback broke. A guard is only as durable as the column it names.
+  #
+  # `total` is the base-currency figure, so it is the signed sum of the links' bcy_amount -
+  # debits positive, credits negative. The 2013-10-01 balance is the exception on purpose: it is
+  # the upstream payload verbatim, 10000 over a single split worth 2000, so the reconciliation
+  # path has a fixture that genuinely disagrees with itself.
+
+  - changeSet:
+      id: seed-accounts
+      author: nam
+      context: dev
+      changes:
+        # Petty Cash is seeded with no links at all, so the many-to-many has an account no
+        # balance draws on - the case a join-only fixture would never produce.
+        - sql:
+            sql: >
+              INSERT INTO accounts (account_name, create_time, last_update_time)
+              SELECT a.account_name, a.create_time, a.create_time
+              FROM (
+                            SELECT 'Accounts Receivable' AS account_name, '2013-01-01 00:00:00' AS create_time
+                  UNION ALL SELECT 'Undeposited Funds',                    '2013-01-01 00:00:00'
+                  UNION ALL SELECT 'Unearned Revenue',                     '2013-01-01 00:00:00'
+                  UNION ALL SELECT 'Petty Cash',                           '2024-05-06 09:00:00'
+              ) a
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM accounts x WHERE x.account_name = a.account_name
+              )
+      rollback:
+        - delete:
+            tableName: accounts
+            where: >
+              account_name IN ('Accounts Receivable', 'Undeposited Funds',
+                               'Unearned Revenue', 'Petty Cash')
+
+  - changeSet:
+      id: seed-opening-balances
+      author: nam
+      context: dev
+      changes:
+        # Varied on purpose: one balance carrying the upstream inconsistency, two that reconcile,
+        # one with no total and no links at all, and one in a foreign currency at a real exchange
+        # rate so bcy_amount and amount differ. Two of them share a location on different dates,
+        # which is what uk_opening_balance_location_date allows and a single-location fixture
+        # would not exercise.
+        - sql:
+            sql: >
+              INSERT INTO opening_balances
+                  (location_id, balance_date, total, create_time, last_update_time)
+              SELECT b.location_id, b.balance_date, b.total, b.create_time, b.create_time
+              FROM (
+                            SELECT '460000000038080' AS location_id, '2013-10-01' AS balance_date,        10000.0000 AS total, '2013-10-01 09:00:00' AS create_time
+                  UNION ALL SELECT '460000000038081',                '2024-01-01',                       12500.0000,           '2024-01-02 08:30:00'
+                  UNION ALL SELECT '460000000038081',                '2024-07-01',                        2700.0000,           '2024-07-01 10:15:00'
+                  UNION ALL SELECT '460000000038083',                '2025-01-01',                              NULL,           '2025-01-01 07:45:00'
+                  UNION ALL SELECT '460000000038082',                '2025-03-01',                   -46375000.0000,           '2025-03-02 14:20:00'
+              ) b
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM opening_balances x
+                  WHERE x.location_id = b.location_id AND x.balance_date = b.balance_date
+              )
+      rollback:
+        # The links go with them: fk_opening_balance_account_opening_balance is ON DELETE CASCADE.
+        - sql:
+            sql: >
+              DELETE FROM opening_balances
+              WHERE (location_id, balance_date) IN (
+                  ('460000000038080', '2013-10-01'),
+                  ('460000000038081', '2024-01-01'),
+                  ('460000000038081', '2024-07-01'),
+                  ('460000000038083', '2025-01-01'),
+                  ('460000000038082', '2025-03-01')
+              )
+
+  - changeSet:
+      id: seed-opening-balance-accounts
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        # Both sides of the join have to exist; neither id is this file's to invent.
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) = 4 THEN 1 ELSE 0 END FROM opening_balances
+              WHERE (location_id, balance_date) IN (
+                  ('460000000038080', '2013-10-01'), ('460000000038081', '2024-01-01'),
+                  ('460000000038081', '2024-07-01'), ('460000000038082', '2025-03-01')
+              )
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) = 3 THEN 1 ELSE 0 END FROM accounts
+              WHERE account_name IN ('Accounts Receivable', 'Undeposited Funds',
+                                     'Unearned Revenue')
+      changes:
+        # Joined to both sides on their business keys, never on an autoIncrement id, which
+        # differs per database. The 2024-01-01 balance draws on two accounts and Accounts
+        # Receivable is drawn on by two balances, so the many-to-many is exercised in both
+        # directions. currency_id is left off one link to cover the nullable column, and the
+        # 2025-01-01 balance appears nowhere so one balance genuinely has no links.
+        - sql:
+            sql: >
+              INSERT INTO opening_balance_accounts
+                  (opening_balance_id, account_id, debit_or_credit,
+                   currency_id, currency_code, exchange_rate, amount, bcy_amount)
+              SELECT b.id, a.id, s.debit_or_credit,
+                     s.currency_id, s.currency_code, s.exchange_rate, s.amount, s.bcy_amount
+              FROM (
+                            SELECT '460000000038080' AS location_id, '2013-10-01' AS balance_date, 'Undeposited Funds'   AS account_name, 'debit'  AS debit_or_credit, '460000000000097' AS currency_id, 'USD' AS currency_code,     1.000000 AS exchange_rate, 2000.0000 AS amount,     2000.0000 AS bcy_amount
+                  UNION ALL SELECT '460000000038081',                '2024-01-01',                 'Accounts Receivable',                 'debit',                    '460000000000101',                  'VND',                     1.000000,                  9000.0000,                 9000.0000
+                  UNION ALL SELECT '460000000038081',                '2024-01-01',                 'Undeposited Funds',                   'debit',                    '460000000000101',                  'VND',                     1.000000,                  3500.0000,                 3500.0000
+                  UNION ALL SELECT '460000000038081',                '2024-07-01',                 'Accounts Receivable',                 'debit',                    '460000000000101',                  'VND',                     1.000000,                  3200.0000,                 3200.0000
+                  UNION ALL SELECT '460000000038081',                '2024-07-01',                 'Unearned Revenue',                    'credit',                   NULL,                               'VND',                     1.000000,                   500.0000,                  500.0000
+                  UNION ALL SELECT '460000000038082',                '2025-03-01',                 'Unearned Revenue',                    'credit',                   '460000000000103',                  'EUR',                 26500.000000,                  1750.0000,             46375000.0000
+              ) s
+              JOIN opening_balances b
+                ON b.location_id = s.location_id AND b.balance_date = s.balance_date
+              JOIN accounts a ON a.account_name = s.account_name
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM opening_balance_accounts x
+                  WHERE x.opening_balance_id = b.id AND x.account_id = a.id
+              )
+      rollback:
+        - sql:
+            sql: >
+              DELETE FROM opening_balance_accounts
+              WHERE opening_balance_id IN (
+                  SELECT id FROM opening_balances
+                  WHERE (location_id, balance_date) IN (
+                      ('460000000038080', '2013-10-01'), ('460000000038081', '2024-01-01'),
+                      ('460000000038081', '2024-07-01'), ('460000000038082', '2025-03-01')
+                  )
+              )

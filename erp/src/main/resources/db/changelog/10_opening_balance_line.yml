@@ -1,0 +1,148 @@
+databaseChangeLog:
+  # Renames opening_balance_accounts to opening_balance_lines and gives a line a contact.
+  #
+  # "line" says what the row is - one line of a balance - rather than what it points at, which
+  # matters now that a line references two things instead of one.
+  #
+  # contact_id sits on the line, not on opening_balances, so a single balance can be split
+  # across several contacts. That is a wider model than the payload describes: the upstream
+  # `opening_balance` object names no contact at all, which is why the column is nullable - the
+  # rows already loaded from that payload have no contact to point at, and inventing an owner
+  # for them would be worse than leaving it unset.
+  #
+  # 8_opening_balance.yml has already run, so this is a new file rather than an edit. The
+  # constraints are renamed alongside the table: leaving fk_opening_balance_account_* on a table
+  # called opening_balance_lines is the kind of drift that makes a schema hard to read later.
+
+  - changeSet:
+      id: rename-opening-balance-account-to-line
+      author: nam
+      changes:
+        - renameTable:
+            oldTableName: opening_balance_accounts
+            newTableName: opening_balance_lines
+
+  - changeSet:
+      id: add-opening-balance-line-contact
+      author: nam
+      changes:
+        # Nullable on purpose - see the note above. If every line turns out to belong to a
+        # contact, a later file can backfill it and tighten the column.
+        - addColumn:
+            tableName: opening_balance_lines
+            columns:
+              - column:
+                  name: contact_id
+                  type: BIGINT
+
+  - changeSet:
+      id: rename-opening-balance-line-constraints
+      author: nam
+      changes:
+        # The foreign keys come off first: MySQL refuses to drop the unique constraint and the
+        # index below while they are the ones covering the foreign key columns.
+        - dropForeignKeyConstraint:
+            baseTableName: opening_balance_lines
+            constraintName: fk_opening_balance_account_opening_balance
+
+        - dropForeignKeyConstraint:
+            baseTableName: opening_balance_lines
+            constraintName: fk_opening_balance_account_account
+
+        - dropUniqueConstraint:
+            tableName: opening_balance_lines
+            constraintName: uk_opening_balance_account
+
+        - dropIndex:
+            tableName: opening_balance_lines
+            indexName: idx_opening_balance_account_account
+
+        # Unchanged in meaning: a balance still references a given account at most once. Adding
+        # contact_id does not widen this - two lines on the same balance and account, differing
+        # only by contact, would be two ways of saying the same posting.
+        - addUniqueConstraint:
+            tableName: opening_balance_lines
+            columnNames: opening_balance_id, account_id
+            constraintName: uk_opening_balance_line
+
+        - createIndex:
+            tableName: opening_balance_lines
+            indexName: idx_opening_balance_line_account
+            columns:
+              - column:
+                  name: account_id
+
+        # Carries the new foreign key, and answers "every opening balance line for this contact".
+        - createIndex:
+            tableName: opening_balance_lines
+            indexName: idx_opening_balance_line_contact
+            columns:
+              - column:
+                  name: contact_id
+      rollback:
+        - dropIndex:
+            tableName: opening_balance_lines
+            indexName: idx_opening_balance_line_contact
+        - dropIndex:
+            tableName: opening_balance_lines
+            indexName: idx_opening_balance_line_account
+        - dropUniqueConstraint:
+            tableName: opening_balance_lines
+            constraintName: uk_opening_balance_line
+        - addUniqueConstraint:
+            tableName: opening_balance_lines
+            columnNames: opening_balance_id, account_id
+            constraintName: uk_opening_balance_account
+        - createIndex:
+            tableName: opening_balance_lines
+            indexName: idx_opening_balance_account_account
+            columns:
+              - column:
+                  name: account_id
+        - addForeignKeyConstraint:
+            baseTableName: opening_balance_lines
+            baseColumnNames: opening_balance_id
+            referencedTableName: opening_balances
+            referencedColumnNames: id
+            constraintName: fk_opening_balance_account_opening_balance
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: opening_balance_lines
+            baseColumnNames: account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            constraintName: fk_opening_balance_account_account
+
+  - changeSet:
+      id: add-opening-balance-line-foreign-keys
+      author: nam
+      changes:
+        # Same behaviour as before, under names that match the table.
+        - addForeignKeyConstraint:
+            baseTableName: opening_balance_lines
+            baseColumnNames: opening_balance_id
+            referencedTableName: opening_balances
+            referencedColumnNames: id
+            constraintName: fk_opening_balance_line_opening_balance
+            onDelete: CASCADE
+
+        # No CASCADE: the account is shared, so deleting one must be refused while lines still
+        # post to it rather than silently deleting them.
+        - addForeignKeyConstraint:
+            baseTableName: opening_balance_lines
+            baseColumnNames: account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            constraintName: fk_opening_balance_line_account
+
+        # SET NULL rather than CASCADE: a contact going away must not delete the balance line,
+        # which still carries a real amount posted to a real account. The column is nullable, so
+        # the line simply stops naming a contact - the same reasoning as
+        # fk_contact_primary_contact_person in 4_contact.yml.
+        - addForeignKeyConstraint:
+            baseTableName: opening_balance_lines
+            baseColumnNames: contact_id
+            referencedTableName: contacts
+            referencedColumnNames: id
+            constraintName: fk_opening_balance_line_contact
+            onDelete: SET NULL

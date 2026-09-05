@@ -13,3 +13,11 @@ databaseChangeLog:
       file: db/changelog/6_seed_organization_more.yml
   - include:
       file: db/changelog/7_seed_contact.yml
+  - include:
+      file: db/changelog/8_opening_balance.yml
+  - include:
+      file: db/changelog/9_seed_opening_balance.yml
+  - include:
+      file: db/changelog/10_opening_balance_line.yml
+  - include:
+      file: db/changelog/11_seed_opening_balance_line_contact.yml

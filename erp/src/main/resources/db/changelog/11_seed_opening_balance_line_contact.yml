@@ -1,0 +1,78 @@
+databaseChangeLog:
+  # Points some of the seeded opening balance lines at a contact, so the column and the foreign
+  # key added in 10_opening_balance_line.yml are actually exercised in dev.
+  #
+  # 9_seed_opening_balance.yml has already run and its changeSets cannot be reopened, so the
+  # link is made here as an UPDATE rather than by rewriting that insert.
+  #
+  # Which contact is a judgement call the data does not make for us: opening_balance_lines has no
+  # organization, while contacts exist once per organization, so a contact_number alone matches
+  # six rows. The lines are attached to the contacts of the lowest-numbered organization - an
+  # arbitrary but deterministic choice, and the honest consequence of a table that is not scoped
+  # to a tenant. If lines turn out to be per-organization, that is a column and a foreign key in
+  # a later file, and this seed changes with it.
+
+  - changeSet:
+      id: seed-opening-balance-line-contacts
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        # Nothing to link if either side is missing; neither id is this file's to invent.
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+              FROM opening_balance_lines WHERE contact_id IS NULL
+        - sqlCheck:
+            expectedResult: 1
+            sql: >
+              SELECT CASE WHEN COUNT(*) = 4 THEN 1 ELSE 0 END FROM contacts
+              WHERE organization_id = (SELECT MIN(id) FROM organizations)
+                AND contact_number IN ('CNT-000001', 'CNT-000002',
+                                       'CNT-000004', 'CNT-000006')
+      changes:
+        # Deliberately not a link for every line. CNT-000001 appears on two different balances,
+        # so a contact's opening position is spread across more than one; CNT-000004 is a vendor
+        # rather than a customer; and the 2024-07-01 Unearned Revenue line is left with no
+        # contact at all, which is the case the nullable column exists for and the one a
+        # fully-populated fixture would never cover.
+        #
+        # Lines are matched through their balance and account business keys rather than by id,
+        # which is autoIncrement and differs per database. WHERE contact_id IS NULL makes a
+        # re-run a no-op and stops the seed overwriting a link someone set by hand.
+        - sql:
+            sql: >
+              UPDATE opening_balance_lines l
+              JOIN opening_balances b ON b.id = l.opening_balance_id
+              JOIN accounts a ON a.id = l.account_id
+              JOIN (
+                            SELECT '460000000038080' AS location_id, '2013-10-01' AS balance_date, 'Undeposited Funds'   AS account_name, 'CNT-000001' AS contact_number
+                  UNION ALL SELECT '460000000038081',                '2024-01-01',                 'Accounts Receivable',                 'CNT-000001'
+                  UNION ALL SELECT '460000000038081',                '2024-01-01',                 'Undeposited Funds',                   'CNT-000002'
+                  UNION ALL SELECT '460000000038081',                '2024-07-01',                 'Accounts Receivable',                 'CNT-000006'
+                  UNION ALL SELECT '460000000038082',                '2025-03-01',                 'Unearned Revenue',                    'CNT-000004'
+              ) m ON m.location_id = b.location_id
+                 AND m.balance_date = b.balance_date
+                 AND m.account_name = a.account_name
+              JOIN contacts ct ON ct.contact_number = m.contact_number
+                              AND ct.organization_id = (SELECT MIN(id) FROM organizations)
+              SET l.contact_id = ct.id
+              WHERE l.contact_id IS NULL
+      rollback:
+        # Unsets only the links this changeSet made, matched the same way it matched them.
+        - sql:
+            sql: >
+              UPDATE opening_balance_lines l
+              JOIN opening_balances b ON b.id = l.opening_balance_id
+              JOIN accounts a ON a.id = l.account_id
+              JOIN (
+                            SELECT '460000000038080' AS location_id, '2013-10-01' AS balance_date, 'Undeposited Funds'   AS account_name
+                  UNION ALL SELECT '460000000038081',                '2024-01-01',                 'Accounts Receivable'
+                  UNION ALL SELECT '460000000038081',                '2024-01-01',                 'Undeposited Funds'
+                  UNION ALL SELECT '460000000038081',                '2024-07-01',                 'Accounts Receivable'
+                  UNION ALL SELECT '460000000038082',                '2025-03-01',                 'Unearned Revenue'
+              ) m ON m.location_id = b.location_id
+                 AND m.balance_date = b.balance_date
+                 AND m.account_name = a.account_name
+              SET l.contact_id = NULL

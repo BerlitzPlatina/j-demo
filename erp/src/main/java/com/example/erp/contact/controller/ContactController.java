@@ -16,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -62,5 +64,17 @@ public class ContactController {
         ContactResponse created = contactService.create(request, organizationId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(created));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ContactResponse>> getContact(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(contactService.getById(id)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ContactResponse>> update(@PathVariable Long id,
+            @Valid @RequestBody ContactCreateRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(contactService.update(request, id)));
     }
 }

@@ -1,0 +1,225 @@
+databaseChangeLog:
+  # Opening balances and the accounts they are split over.
+  #
+  # Modelled straight from the upstream `opening_balance` payload, with three decisions worth
+  # stating because the JSON does not make them for you:
+  #
+  # 1. `accounts` is an array, and the relation it stands for was confirmed as many-to-many: an
+  #    account belongs to a chart of accounts that many balances draw on, so it is an entity of
+  #    its own and opening_balance_accounts is the join between the two.
+  # 2. The payload names no contact and no organization, so neither foreign key is written here.
+  #    Nothing in the JSON points at either, and a guessed relation is expensive to undo.
+  # 3. An upstream id for the row itself - opening_balance_id, account_split_id, the account's
+  #    own account_id - is not stored. Every row already has `id`; a second identifier for the
+  #    same row is one more thing that can disagree with itself. location_id and currency_id do
+  #    stay, because those are references to a branch and a currency that have no table here,
+  #    not duplicates of this row's own key.
+
+  - changeSet:
+      id: create-account
+      author: nam
+      changes:
+        # The chart of accounts. A root entity - referenced by balances rather than owned by one
+        # - so it carries the AbstractAuditModel timestamps.
+        - createTable:
+            tableName: accounts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              # The only thing that tells one account from another now that the upstream id is
+              # gone, so it carries that weight: not null, and unique below.
+              - column:
+                  name: account_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: create_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_update_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-opening-balance
+      author: nam
+      changes:
+        - createTable:
+            tableName: opening_balances
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              # The payload calls this `date`; renamed so the column does not read as a type.
+              - column:
+                  name: balance_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+
+              # The branch this balance is opened for, as the upstream system's id: there is no
+              # locations table in this module to point a foreign key at.
+              - column:
+                  name: location_id
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+              # Kept as the figure upstream sent, not as a sum over the links. The source
+              # payload disagreed with itself - 10000 against splits worth 2000 - so the two can
+              # drift and the received value has to survive verbatim to reconcile against.
+              - column:
+                  name: total
+                  type: DECIMAL(19,4)
+
+              # price_precision is deliberately absent: it says how a caller wants a number
+              # rendered and carries no state, like ignore_auto_number_generation.
+
+              - column:
+                  name: create_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_update_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-opening-balance-account
+      author: nam
+      changes:
+        # The join table. Every column here describes the link rather than either side: the same
+        # account joined to another balance carries a different amount and direction. Written
+        # only through its balance, so it needs no audit timestamps of its own.
+        - createTable:
+            tableName: opening_balance_accounts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: opening_balance_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              # debit / credit. The direction is carried here rather than by a negative amount,
+              # because that is how the payload states it.
+              - column:
+                  name: debit_or_credit
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              # Currency belongs to the link, not the account: the same account can be posted to
+              # in more than one currency. An upstream id, so text rather than BIGINT.
+              - column:
+                  name: currency_id
+                  type: VARCHAR(50)
+
+              - column:
+                  name: currency_code
+                  type: VARCHAR(3)
+
+              - column:
+                  name: exchange_rate
+                  type: DECIMAL(19,6)
+
+              # amount is in the link's own currency; bcy_amount is the same figure converted to
+              # the base currency, matching the *_bcy pairs used elsewhere in the schema.
+              - column:
+                  name: amount
+                  type: DECIMAL(19,4)
+
+              - column:
+                  name: bcy_amount
+                  type: DECIMAL(19,4)
+
+  - changeSet:
+      id: add-opening-balance-foreign-keys
+      author: nam
+      changes:
+        # The link cannot outlive the balance it splits up.
+        - addForeignKeyConstraint:
+            baseTableName: opening_balance_accounts
+            baseColumnNames: opening_balance_id
+            referencedTableName: opening_balances
+            referencedColumnNames: id
+            constraintName: fk_opening_balance_account_opening_balance
+            onDelete: CASCADE
+
+        # No CASCADE on this side, on purpose: the account is shared, so deleting one must be
+        # refused while balances still post to it rather than silently deleting their splits.
+        - addForeignKeyConstraint:
+            baseTableName: opening_balance_accounts
+            baseColumnNames: account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            constraintName: fk_opening_balance_account_account
+
+  - changeSet:
+      id: add-opening-balance-unique-constraints
+      author: nam
+      changes:
+        - addUniqueConstraint:
+            tableName: accounts
+            columnNames: account_name
+            constraintName: uk_account_name
+
+        # One opening balance per branch per date. This is the business key an import matches a
+        # balance on, now that the upstream id is not stored - without it a re-import has no way
+        # to tell an update from a new row.
+        - addUniqueConstraint:
+            tableName: opening_balances
+            columnNames: location_id, balance_date
+            constraintName: uk_opening_balance_location_date
+
+        # The plain many-to-many key: a balance references a given account at most once.
+        - addUniqueConstraint:
+            tableName: opening_balance_accounts
+            columnNames: opening_balance_id, account_id
+            constraintName: uk_opening_balance_account
+
+  - changeSet:
+      id: add-opening-balance-indexes
+      author: nam
+      changes:
+        # The other direction of the many-to-many: every balance posted to one account. The
+        # opening_balance_id side is already covered by the unique constraint above.
+        - createIndex:
+            tableName: opening_balance_accounts
+            indexName: idx_opening_balance_account_account
+            columns:
+              - column:
+                  name: account_id
