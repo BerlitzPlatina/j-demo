@@ -25,3 +25,7 @@ databaseChangeLog:
       file: db/changelog/12_department.yml
   - include:
       file: db/changelog/13_seed_department.yml
+  - include:
+      file: db/changelog/14_designation.yml
+  - include:
+      file: db/changelog/15_seed_designation.yml

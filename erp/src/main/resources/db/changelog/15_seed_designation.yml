@@ -1,0 +1,49 @@
+databaseChangeLog:
+  # Development seed data for the designation module.
+  #
+  # `designations` is a root table: it has no organization_id and no foreign key, so there is
+  # nothing to join against and the catalog is inserted as a flat list.
+  #
+  # `name` is the only business key the table has - it is the sole NOT NULL unique column - so
+  # the guard is a NOT EXISTS on it rather than a "table is empty" precondition. A changeSet
+  # whose precondition fails is recorded as MARK_RAN and never reconsidered, so keying on
+  # emptiness would silently lose the rows forever - the mistake 6_seed_organization_more.yml
+  # had to repair. Re-running this file is a no-op instead.
+
+  - changeSet:
+      id: seed-designations
+      author: nam
+      context: dev
+      changes:
+        # One row per job title, spread over several create_time values so a sort on the audit
+        # column has something to order rather than one flat timestamp.
+        - sql:
+            sql: >
+              INSERT INTO designations (name, create_time, last_update_time)
+              SELECT c.name, c.create_time, c.create_time
+              FROM (
+                        SELECT 'Chief Executive Officer' AS name, '2024-01-15 08:00:00' AS create_time
+                  UNION ALL SELECT 'Chief Financial Officer',     '2024-01-15 08:00:00'
+                  UNION ALL SELECT 'Chief Technology Officer',    '2024-01-15 08:00:00'
+                  UNION ALL SELECT 'General Manager',             '2024-02-01 09:15:00'
+                  UNION ALL SELECT 'Department Manager',          '2024-02-01 09:15:00'
+                  UNION ALL SELECT 'Team Lead',                   '2024-03-02 09:30:00'
+                  UNION ALL SELECT 'Senior Software Engineer',    '2024-03-02 09:30:00'
+                  UNION ALL SELECT 'Software Engineer',           '2024-03-02 09:30:00'
+                  UNION ALL SELECT 'Business Analyst',            '2024-06-20 14:05:00'
+                  UNION ALL SELECT 'Accountant',                  '2024-06-20 14:05:00'
+                  UNION ALL SELECT 'Sales Executive',             '2024-06-20 14:05:00'
+                  UNION ALL SELECT 'HR Officer',                  '2025-02-10 11:45:00'
+                  UNION ALL SELECT 'Intern',                      '2025-02-10 11:45:00'
+              ) AS c
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM designations d WHERE d.name = c.name
+              )
+      rollback:
+        - delete:
+            tableName: designations
+            where: >
+              name IN ('Chief Executive Officer', 'Chief Financial Officer', 'Chief Technology Officer',
+                       'General Manager', 'Department Manager', 'Team Lead', 'Senior Software Engineer',
+                       'Software Engineer', 'Business Analyst', 'Accountant', 'Sales Executive',
+                       'HR Officer', 'Intern')
