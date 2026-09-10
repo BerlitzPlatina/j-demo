@@ -21,3 +21,7 @@ databaseChangeLog:
       file: db/changelog/10_opening_balance_line.yml
   - include:
       file: db/changelog/11_seed_opening_balance_line_contact.yml
+  - include:
+      file: db/changelog/12_department.yml
+  - include:
+      file: db/changelog/13_seed_department.yml

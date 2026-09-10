@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-department
+      author: nam
+      changes:
+        - createTable:
+            tableName: departments
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+              
+              - column:
+                  name: department_code
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              # Backs AbstractAuditModel from the common-jpa jar; JPA auditing fills both in.
+              - column:
+                  name: create_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_update_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
