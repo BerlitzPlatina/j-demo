@@ -1,8 +1,12 @@
 package com.example.erp.contact.entity;
 
 import com.example.common.jpa.entity.AbstractAuditModel;
+import com.example.erp.organization.entity.Organization;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +29,31 @@ public class Contact extends AbstractAuditModel {
 
     @Column(name = "organization_id")
     private Long organizationId;
+
+    /**
+     * The owning organization, read-only: the same column is already mapped by
+     * {@link #organizationId}, so this side is {@code insertable = false} /
+     * {@code updatable = false} and writes keep going through the plain id. It
+     * exists so a response can carry the organization; the name search does not go
+     * through it, that one is an {@code exists} subquery in
+     * {@code ContactSpecifications}.
+     * <p>
+     * Left lazy and batch-loaded rather than fetched with the page query: the
+     * mapper touches the proxy of the first row and Hibernate loads the
+     * organizations of up to {@code @BatchSize} rows in one
+     * {@code where id in (...)} - see the annotation on {@link Organization}, which
+     * is where a to-one batch size has to sit. A page of 10 contacts costs one
+     * extra select instead of ten, and the page query itself stays a plain single
+     * table select.
+     * <p>
+     * Excluded from {@code toString}/{@code equals} - touching a lazy proxy there
+     * would fail outside a transaction.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", insertable = false, updatable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Organization organization;
 
     @Column(name = "contact_number", length = 50)
     private String contactNumber;

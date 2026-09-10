@@ -28,9 +28,17 @@ import java.util.List;
  * module. The id and the
  * two audit timestamps come from {@link AbstractAuditModel}, so they are not
  * repeated here.
+ * <p>
+ * The class-level {@code @BatchSize} governs how <em>proxies</em> of this entity
+ * are resolved: when something reads one unloaded organization - a page of
+ * contacts walking {@code Contact#organization}, say - Hibernate loads up to 50
+ * of the pending proxies in a single {@code where id in (...)} instead of one
+ * select each. It has to sit on the class; on a to-one field the annotation is
+ * ignored.
  */
 @Entity
 @Table(name = "organizations")
+@BatchSize(size = 50)
 @Data
 @Builder
 @NoArgsConstructor
@@ -125,7 +133,7 @@ public class Organization extends AbstractAuditModel {
      */
     @OneToMany(mappedBy = "organization", fetch = FetchType.LAZY)
     @Fetch(FetchMode.SUBSELECT)
-    // @BatchSize(size = 50)
+    // @BatchSize(size = 2)
     @Builder.Default
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

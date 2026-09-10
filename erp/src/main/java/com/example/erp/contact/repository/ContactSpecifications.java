@@ -5,8 +5,14 @@ import org.springframework.util.StringUtils;
 
 import com.example.erp.contact.dto.ContactSearchRequest;
 import com.example.erp.contact.entity.Contact;
+import com.example.erp.organization.entity.Organization;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
@@ -39,6 +45,7 @@ public final class ContactSpecifications {
                 like("companyName", request.companyName()),
                 eq("status", request.status()),
                 eq("organizationId", request.organizationId()),
+                organizationName(request.organizationName()),
                 eq("customerSubType", request.customerSubType()),
                 eq("hasTransaction", request.hasTransaction()),
                 keyword(request.keyword()),
@@ -65,6 +72,21 @@ public final class ContactSpecifications {
         return (root, query, cb) -> cb.like(cb.lower(root.get(attribute)), like);
     }
 
+    /**
+     * Filters on the name of the organization the contact belongs to, as an
+     * {@code exists} subquery rather than a join: the contact row is the only thing
+     * the outer query selects, so nothing depends on the organization being in the
+     * from-clause, and the subquery cannot multiply or drop rows no matter how the
+     * rest of the specification is composed.
+     */
+    private static Specification<Contact> organizationName(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return null;
+        }
+        String like = "%" + keyword.trim().toLowerCase() + "%";
+        return (root, query, cb) -> organizationNameExists(root, query, cb, like);
+    }
+
     /** One search box, spread over the columns a user actually types into. */
     private static Specification<Contact> keyword(String keyword) {
         if (!StringUtils.hasText(keyword)) {
@@ -75,7 +97,26 @@ public final class ContactSpecifications {
                 cb.like(cb.lower(root.get("contactName")), like),
                 cb.like(cb.lower(root.get("companyName")), like),
                 cb.like(cb.lower(root.get("legalName")), like),
-                cb.like(cb.lower(root.get("contactNumber")), like));
+                cb.like(cb.lower(root.get("contactNumber")), like),
+                organizationNameExists(root, query, cb, like));
+    }
+
+    /**
+     * <pre>
+     * exists (select 1 from organizations o
+     *         where o.id = c.organization_id and lower(o.name) like ?)
+     * </pre>
+     * <p>
+     * Correlated on the plain {@code organizationId} column, so a contact with no
+     * organization simply fails the condition instead of needing an outer join.
+     */
+    private static Predicate organizationNameExists(Root<Contact> root, CriteriaQuery<?> query,
+            CriteriaBuilder cb, String like) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<Organization> organization = subquery.from(Organization.class);
+        return cb.exists(subquery.select(cb.literal(1))
+                .where(cb.equal(organization.get("id"), root.get("organizationId")),
+                        cb.like(cb.lower(organization.get("name")), like)));
     }
 
     /**

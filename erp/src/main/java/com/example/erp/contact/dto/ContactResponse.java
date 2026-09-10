@@ -28,5 +28,6 @@ public record ContactResponse(
                 Integer paymentTerms,
                 BigDecimal outstandingReceivableAmount,
                 BigDecimal unusedCreditsReceivableAmount,
-                Long ownerId) {
+                Long ownerId,
+                ContactOrganizationResponse organization) {
 }

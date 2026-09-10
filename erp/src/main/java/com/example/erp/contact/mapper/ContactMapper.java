@@ -1,8 +1,10 @@
 package com.example.erp.contact.mapper;
 
 import com.example.erp.contact.dto.ContactCreateRequest;
+import com.example.erp.contact.dto.ContactOrganizationResponse;
 import com.example.erp.contact.dto.ContactResponse;
 import com.example.erp.contact.entity.Contact;
+import com.example.erp.organization.entity.Organization;
 
 /**
  * Entity to response. Kept in one place so no controller ever serializes an
@@ -40,7 +42,26 @@ public final class ContactMapper {
                 contact.getPaymentTerms(),
                 contact.getOutstandingReceivableAmount(),
                 contact.getUnusedCreditsReceivableAmount(),
-                contact.getOwnerId());
+                contact.getOwnerId(),
+                toOrganizationResponse(contact.getOrganization()));
+    }
+
+    /**
+     * Null only when the contact carries no organization_id. Reading the
+     * association here resolves a lazy proxy, which is why {@code Organization} is
+     * {@code @BatchSize}d: the first row triggers one select that also loads the
+     * organizations of the rest of the page. It does mean this runs inside the
+     * service's transaction - a detached contact would throw here instead.
+     */
+    private static ContactOrganizationResponse toOrganizationResponse(Organization organization) {
+        if (organization == null) {
+            return null;
+        }
+        return new ContactOrganizationResponse(
+                organization.getId(),
+                organization.getName(),
+                organization.getContactName(),
+                organization.getIndustryType());
     }
 
     public static Contact toEntity(ContactCreateRequest request, Long organizationId) {

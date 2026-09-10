@@ -41,7 +41,10 @@ public class ContactController {
 
     /**
      * GET /api/contacts?keyword=acme&contactType=customer&status=ACTIVE
-     * &creditLimitFrom=1000&page=0&size=10&sort=contactName,asc
+     * &organizationName=acme&creditLimitFrom=1000&page=0&size=10&sort=contactName,asc
+     * <p>
+     * Every row carries its organization, and {@code organizationName} - like
+     * {@code keyword} - matches on the organization's name.
      * <p>
      * The filters arrive as one {@code @ModelAttribute} rather than a dozen
      * {@code @RequestParam}s, so adding a filter is a field on

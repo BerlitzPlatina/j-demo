@@ -29,7 +29,8 @@ public class ContactService {
      */
     private static final Set<String> SORTABLE_FIELDS = Set.of(
             "id", "contactNumber", "contactName", "companyName", "contactType", "status",
-            "creditLimit", "outstandingReceivableAmount", "createTime", "lastUpdateTime");
+            "creditLimit", "outstandingReceivableAmount", "createTime", "lastUpdateTime",
+            "organization.name");
 
     private final ContactDao contactDao;
 

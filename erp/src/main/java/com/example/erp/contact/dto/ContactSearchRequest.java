@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 public record ContactSearchRequest(
                 Long organizationId,
+                String organizationName,
                 String contactName,
                 String companyName,
                 String keyword,
