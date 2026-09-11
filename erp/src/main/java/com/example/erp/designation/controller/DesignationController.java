@@ -1,7 +1,10 @@
 package com.example.erp.designation.controller;
 
 import com.example.common.web.dto.ApiResponse;
+
 import com.example.common.web.dto.PageResponse;
+import com.example.erp.common.constant.ApiPaths;
+import com.example.erp.common.constant.ErpConstants;
 import com.example.erp.designation.dto.DesignationCreateRequest;
 import com.example.erp.designation.dto.DesignationPatchRequest;
 import com.example.erp.designation.dto.DesignationResponse;
@@ -29,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
  * {@link DesignationResponse} transfer objects; entities never leave the service layer.
  */
 @RestController
-@RequestMapping("/api/designations")
+@RequestMapping(ApiPaths.DESIGNATIONS)
 public class DesignationController {
 
     private final DesignationService designationService;
@@ -44,7 +47,8 @@ public class DesignationController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<DesignationResponse>>> getDesignations(
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = ErpConstants.DEFAULT_PAGE_SIZE, sort = ErpConstants.ID,
+                    direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(designationService.search(keyword, pageable)));
     }
 

@@ -1,7 +1,10 @@
 package com.example.erp.organization.controller;
 
 import com.example.common.web.dto.ApiResponse;
+
 import com.example.common.web.dto.PageResponse;
+import com.example.erp.common.constant.ApiPaths;
+import com.example.erp.common.constant.ErpConstants;
 import com.example.erp.organization.dto.OrganizationCreateRequest;
 import com.example.erp.organization.dto.OrganizationPatchRequest;
 import com.example.erp.organization.dto.OrganizationResponse;
@@ -29,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
  * {@link OrganizationResponse} transfer objects; entities never leave the service layer.
  */
 @RestController
-@RequestMapping("/api/organizations")
+@RequestMapping(ApiPaths.ORGANIZATIONS)
 public class OrganizationController {
 
     private final OrganizationService organizationService;
@@ -44,7 +47,8 @@ public class OrganizationController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<OrganizationResponse>>> getOrganizations(
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = ErpConstants.DEFAULT_PAGE_SIZE, sort = ErpConstants.ID,
+                    direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(organizationService.search(keyword, pageable)));
     }
 

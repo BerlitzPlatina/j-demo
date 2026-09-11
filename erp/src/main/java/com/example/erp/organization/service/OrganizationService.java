@@ -2,6 +2,9 @@ package com.example.erp.organization.service;
 
 import com.example.common.web.dto.PageResponse;
 import com.example.common.web.exception.ResourceNotFoundException;
+import com.example.erp.common.page.PageableSupport;
+import com.example.erp.common.support.Entities;
+import com.example.erp.common.support.Guards;
 import com.example.erp.organization.dto.OrganizationCreateRequest;
 import com.example.erp.organization.dto.OrganizationPatchRequest;
 import com.example.erp.organization.dto.OrganizationResponse;
@@ -10,9 +13,7 @@ import com.example.erp.organization.entity.Organization;
 import com.example.erp.organization.mapper.OrganizationMapper;
 import com.example.erp.organization.repository.OrganizationDao;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -34,12 +35,12 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class OrganizationService {
 
+    /** How this entity is named in a 404 or a duplicate-value message. */
+    private static final String ENTITY = "Organization";
+
     /** Properties a client may sort by; anything else is rejected instead of reaching the SQL. */
     private static final Set<String> SORTABLE_FIELDS =
-            Set.of("id", "name", "userStatus", "industryType", "accountCreatedDate", "createTime", "lastUpdateTime");
-
-    /** Paging needs a deterministic order; fall back to the id when the caller gives none. */
-    private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "id");
+            PageableSupport.sortableFields("name", "userStatus", "industryType", "accountCreatedDate");
 
     private final OrganizationDao organizationDao;
 
@@ -52,7 +53,8 @@ public class OrganizationService {
     /** One page of organizations, optionally filtered by a case-insensitive name fragment. */
     public PageResponse<OrganizationResponse> search(String keyword, Pageable pageable) {
         Page<Organization> page = organizationDao.findByNameContainingIgnoreCase(
-                StringUtils.hasText(keyword) ? keyword.trim() : "", withSafeSort(pageable));
+                StringUtils.hasText(keyword) ? keyword.trim() : "",
+                PageableSupport.sanitize(pageable, SORTABLE_FIELDS));
         return PageResponse.from(page, OrganizationMapper::toResponse);
     }
 
@@ -71,9 +73,8 @@ public class OrganizationService {
 
     @Transactional
     public OrganizationResponse create(OrganizationCreateRequest request) {
-        if (organizationDao.existsByNameIgnoreCase(request.name())) {
-            throw new IllegalArgumentException("name: an organization named '" + request.name() + "' already exists");
-        }
+        Guards.assertNotTaken(organizationDao.existsByNameIgnoreCase(request.name()),
+                "name", "an organization", request.name());
         Organization saved = organizationDao.save(OrganizationMapper.toEntity(request));
         applyDefaultFlag(saved);
         return OrganizationMapper.toResponse(saved);
@@ -118,14 +119,12 @@ public class OrganizationService {
     // ---------------------------------------------------------------- helper
 
     private Organization findOrThrow(Long id) {
-        return organizationDao.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Organization not found with id: " + id));
+        return Entities.findOrThrow(organizationDao, id, ENTITY);
     }
 
     private void assertNameFree(String name, Long id) {
-        if (organizationDao.existsByNameIgnoreCaseAndIdNot(name, id)) {
-            throw new IllegalArgumentException("name: an organization named '" + name + "' already exists");
-        }
+        Guards.assertNotTaken(organizationDao.existsByNameIgnoreCaseAndIdNot(name, id),
+                "name", "an organization", name);
     }
 
     /** Keeps the default flag on exactly one row: whichever one just claimed it. */
@@ -133,23 +132,5 @@ public class OrganizationService {
         if (Boolean.TRUE.equals(organization.getDefaultOrg())) {
             organizationDao.clearDefaultExcept(organization.getId());
         }
-    }
-
-    /**
-     * Rejects a sort on a property that is not in {@link #SORTABLE_FIELDS}, and supplies a
-     * deterministic order when the request carries none.
-     */
-    private Pageable withSafeSort(Pageable pageable) {
-        Sort sort = pageable.getSort();
-        if (sort.isUnsorted()) {
-            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), DEFAULT_SORT);
-        }
-        sort.forEach(order -> {
-            if (!SORTABLE_FIELDS.contains(order.getProperty())) {
-                throw new IllegalArgumentException("sort: unsupported property '" + order.getProperty()
-                        + "', allowed: " + SORTABLE_FIELDS);
-            }
-        });
-        return pageable;
     }
 }

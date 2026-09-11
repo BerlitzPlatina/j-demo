@@ -29,3 +29,7 @@ databaseChangeLog:
       file: db/changelog/14_designation.yml
   - include:
       file: db/changelog/15_seed_designation.yml
+  - include:
+      file: db/changelog/16_tax.yml
+  - include:
+      file: db/changelog/17_seed_tax.yml

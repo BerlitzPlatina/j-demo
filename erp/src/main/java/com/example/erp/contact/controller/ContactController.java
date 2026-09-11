@@ -1,7 +1,10 @@
 package com.example.erp.contact.controller;
 
 import com.example.common.web.dto.ApiResponse;
+
 import com.example.common.web.dto.PageResponse;
+import com.example.erp.common.constant.ApiPaths;
+import com.example.erp.common.constant.ErpConstants;
 import com.example.erp.contact.dto.ContactCreateRequest;
 import com.example.erp.contact.dto.ContactResponse;
 import com.example.erp.contact.dto.ContactSearchRequest;
@@ -30,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
  * transfer objects; entities never leave the service layer.
  */
 @RestController
-@RequestMapping("/api/contacts")
+@RequestMapping(ApiPaths.CONTACTS)
 public class ContactController {
 
     private final ContactService contactService;
@@ -56,7 +59,8 @@ public class ContactController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ContactResponse>>> getContacts(
             @ModelAttribute ContactSearchRequest request,
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = ErpConstants.DEFAULT_PAGE_SIZE, sort = ErpConstants.ID,
+                    direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(contactService.search(request, pageable)));
     }
 

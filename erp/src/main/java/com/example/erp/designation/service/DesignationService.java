@@ -1,7 +1,9 @@
 package com.example.erp.designation.service;
 
 import com.example.common.web.dto.PageResponse;
-import com.example.common.web.exception.ResourceNotFoundException;
+import com.example.erp.common.page.PageableSupport;
+import com.example.erp.common.support.Entities;
+import com.example.erp.common.support.Guards;
 import com.example.erp.designation.dto.DesignationCreateRequest;
 import com.example.erp.designation.dto.DesignationPatchRequest;
 import com.example.erp.designation.dto.DesignationResponse;
@@ -10,9 +12,7 @@ import com.example.erp.designation.entity.Designation;
 import com.example.erp.designation.mapper.DesignationMapper;
 import com.example.erp.designation.repository.DesignationDao;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -30,11 +30,11 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class DesignationService {
 
-    /** Properties a client may sort by; anything else is rejected instead of reaching the SQL. */
-    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "name", "createTime", "lastUpdateTime");
+    /** How this entity is named in a 404 or a duplicate-value message. */
+    private static final String ENTITY = "Designation";
 
-    /** Paging needs a deterministic order; fall back to the id when the caller gives none. */
-    private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "id");
+    /** Properties a client may sort by; anything else is rejected instead of reaching the SQL. */
+    private static final Set<String> SORTABLE_FIELDS = PageableSupport.sortableFields("name");
 
     private final DesignationDao designationDao;
 
@@ -47,7 +47,7 @@ public class DesignationService {
     /** One page, optionally filtered by a case-insensitive name fragment. */
     public PageResponse<DesignationResponse> search(String keyword, Pageable pageable) {
         Page<Designation> page = designationDao.findByNameContainingIgnoreCase(
-                StringUtils.hasText(keyword) ? keyword.trim() : "", withSafeSort(pageable));
+                StringUtils.hasText(keyword) ? keyword.trim() : "", PageableSupport.sanitize(pageable, SORTABLE_FIELDS));
         return PageResponse.from(page, DesignationMapper::toResponse);
     }
 
@@ -59,10 +59,8 @@ public class DesignationService {
 
     @Transactional
     public DesignationResponse create(DesignationCreateRequest request) {
-        if (designationDao.existsByNameIgnoreCase(request.name())) {
-            throw new IllegalArgumentException(
-                    "name: a designation with name '" + request.name() + "' already exists");
-        }
+        Guards.assertNotTaken(designationDao.existsByNameIgnoreCase(request.name()),
+                "name", "a designation", request.name());
         Designation saved = designationDao.save(DesignationMapper.toEntity(request));
         return DesignationMapper.toResponse(saved);
     }
@@ -95,32 +93,11 @@ public class DesignationService {
     // ---------------------------------------------------------------- helper
 
     private Designation findOrThrow(Long id) {
-        return designationDao.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Designation not found with id: " + id));
+        return Entities.findOrThrow(designationDao, id, ENTITY);
     }
 
     private void assertNameFree(String name, Long id) {
-        if (designationDao.existsByNameIgnoreCaseAndIdNot(name, id)) {
-            throw new IllegalArgumentException(
-                    "name: a designation with name '" + name + "' already exists");
-        }
-    }
-
-    /**
-     * Rejects a sort on a property that is not in {@link #SORTABLE_FIELDS}, and supplies a
-     * deterministic order when the request carries none.
-     */
-    private Pageable withSafeSort(Pageable pageable) {
-        Sort sort = pageable.getSort();
-        if (sort.isUnsorted()) {
-            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), DEFAULT_SORT);
-        }
-        sort.forEach(order -> {
-            if (!SORTABLE_FIELDS.contains(order.getProperty())) {
-                throw new IllegalArgumentException("sort: unsupported property '" + order.getProperty()
-                        + "', allowed: " + SORTABLE_FIELDS);
-            }
-        });
-        return pageable;
+        Guards.assertNotTaken(designationDao.existsByNameIgnoreCaseAndIdNot(name, id),
+                "name", "a designation", name);
     }
 }

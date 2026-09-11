@@ -1,7 +1,9 @@
 package com.example.erp.department.service;
 
 import com.example.common.web.dto.PageResponse;
-import com.example.common.web.exception.ResourceNotFoundException;
+import com.example.erp.common.page.PageableSupport;
+import com.example.erp.common.support.Entities;
+import com.example.erp.common.support.Guards;
 import com.example.erp.department.dto.DepartmentCreateRequest;
 import com.example.erp.department.dto.DepartmentPatchRequest;
 import com.example.erp.department.dto.DepartmentResponse;
@@ -10,9 +12,7 @@ import com.example.erp.department.entity.Department;
 import com.example.erp.department.mapper.DepartmentMapper;
 import com.example.erp.department.repository.DepartmentDao;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -30,11 +30,11 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class DepartmentService {
 
-    /** Properties a client may sort by; anything else is rejected instead of reaching the SQL. */
-    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "name", "departmentCode", "createTime", "lastUpdateTime");
+    /** How this entity is named in a 404 or a duplicate-value message. */
+    private static final String ENTITY = "Department";
 
-    /** Paging needs a deterministic order; fall back to the id when the caller gives none. */
-    private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "id");
+    /** Properties a client may sort by; anything else is rejected instead of reaching the SQL. */
+    private static final Set<String> SORTABLE_FIELDS = PageableSupport.sortableFields("name", "departmentCode");
 
     private final DepartmentDao departmentDao;
 
@@ -47,7 +47,7 @@ public class DepartmentService {
     /** One page, optionally filtered by a case-insensitive name fragment. */
     public PageResponse<DepartmentResponse> search(String keyword, Pageable pageable) {
         Page<Department> page = departmentDao.findByNameContainingIgnoreCase(
-                StringUtils.hasText(keyword) ? keyword.trim() : "", withSafeSort(pageable));
+                StringUtils.hasText(keyword) ? keyword.trim() : "", PageableSupport.sanitize(pageable, SORTABLE_FIELDS));
         return PageResponse.from(page, DepartmentMapper::toResponse);
     }
 
@@ -59,14 +59,10 @@ public class DepartmentService {
 
     @Transactional
     public DepartmentResponse create(DepartmentCreateRequest request) {
-        if (departmentDao.existsByNameIgnoreCase(request.name())) {
-            throw new IllegalArgumentException(
-                    "name: a department with name '" + request.name() + "' already exists");
-        }
-        if (departmentDao.existsByDepartmentCodeIgnoreCase(request.departmentCode())) {
-            throw new IllegalArgumentException(
-                    "departmentCode: a department with code '" + request.departmentCode() + "' already exists");
-        }
+        Guards.assertNotTaken(departmentDao.existsByNameIgnoreCase(request.name()),
+                "name", "a department", request.name());
+        Guards.assertNotTaken(departmentDao.existsByDepartmentCodeIgnoreCase(request.departmentCode()),
+                "departmentCode", "a department", "code", request.departmentCode());
         Department saved = departmentDao.save(DepartmentMapper.toEntity(request));
         return DepartmentMapper.toResponse(saved);
     }
@@ -103,39 +99,16 @@ public class DepartmentService {
     // ---------------------------------------------------------------- helper
 
     private Department findOrThrow(Long id) {
-        return departmentDao.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + id));
+        return Entities.findOrThrow(departmentDao, id, ENTITY);
     }
 
     private void assertNameFree(String name, Long id) {
-        if (departmentDao.existsByNameIgnoreCaseAndIdNot(name, id)) {
-            throw new IllegalArgumentException(
-                    "name: a department with name '" + name + "' already exists");
-        }
+        Guards.assertNotTaken(departmentDao.existsByNameIgnoreCaseAndIdNot(name, id),
+                "name", "a department", name);
     }
 
     private void assertCodeFree(String departmentCode, Long id) {
-        if (departmentDao.existsByDepartmentCodeIgnoreCaseAndIdNot(departmentCode, id)) {
-            throw new IllegalArgumentException(
-                    "departmentCode: a department with code '" + departmentCode + "' already exists");
-        }
-    }
-
-    /**
-     * Rejects a sort on a property that is not in {@link #SORTABLE_FIELDS}, and supplies a
-     * deterministic order when the request carries none.
-     */
-    private Pageable withSafeSort(Pageable pageable) {
-        Sort sort = pageable.getSort();
-        if (sort.isUnsorted()) {
-            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), DEFAULT_SORT);
-        }
-        sort.forEach(order -> {
-            if (!SORTABLE_FIELDS.contains(order.getProperty())) {
-                throw new IllegalArgumentException("sort: unsupported property '" + order.getProperty()
-                        + "', allowed: " + SORTABLE_FIELDS);
-            }
-        });
-        return pageable;
+        Guards.assertNotTaken(departmentDao.existsByDepartmentCodeIgnoreCaseAndIdNot(departmentCode, id),
+                "departmentCode", "a department", "code", departmentCode);
     }
 }

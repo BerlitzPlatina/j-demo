@@ -1,0 +1,358 @@
+databaseChangeLog:
+  # Development seed data for the tax module.
+  #
+  # `taxes.name` is the business key owned by this seed.
+  # The guard uses NOT EXISTS on `name` instead of checking whether the table is empty.
+  #
+  # Account IDs below are development account IDs and must exist before this changeSet runs.
+
+  - changeSet:
+      id: seed-taxes
+      author: nam
+      context: dev
+
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO taxes (
+                  name,
+                  display_name,
+                  percentage,
+                  type,
+                  factor,
+                  specific_type,
+                  authority_name,
+                  authority_id,
+                  is_value_added,
+                  tax_account_id,
+                  purchase_tax_account_id,
+                  purchase_tax_expense_account_id,
+                  tds_payable_account_id,
+                  tcs_receivable_account_id,
+                  tcs_payable_account_id,
+                  account_tracking,
+                  is_non_advol_tax,
+                  is_state_cess,
+                  diff_rate_reason,
+                  start_date,
+                  end_date,
+                  description,
+                  create_time,
+                  last_update_time
+              )
+              SELECT
+                  c.name,
+                  c.display_name,
+                  c.percentage,
+                  c.type,
+                  c.factor,
+                  c.specific_type,
+                  c.authority_name,
+                  c.authority_id,
+                  c.is_value_added,
+                  c.tax_account_id,
+                  c.purchase_tax_account_id,
+                  c.purchase_tax_expense_account_id,
+                  c.tds_payable_account_id,
+                  c.tcs_receivable_account_id,
+                  c.tcs_payable_account_id,
+                  c.account_tracking,
+                  c.is_non_advol_tax,
+                  c.is_state_cess,
+                  c.diff_rate_reason,
+                  c.start_date,
+                  c.end_date,
+                  c.description,
+                  c.create_time,
+                  c.create_time
+              FROM (
+                  SELECT
+                      'IGST5' AS name,
+                      'IGST 5%' AS display_name,
+                      5 AS percentage,
+                      'tax' AS type,
+                      'rate' AS factor,
+                      'igst' AS specific_type,
+                      'Central Board of Indirect Taxes and Customs' AS authority_name,
+                      '460000000066001' AS authority_id,
+                      FALSE AS is_value_added,
+                      132086000000107333 AS tax_account_id,
+                      132086000000107337 AS purchase_tax_account_id,
+                      132086000000107337 AS purchase_tax_expense_account_id,
+                      132086000000107338 AS tds_payable_account_id,
+                      132086000000107339 AS tcs_receivable_account_id,
+                      132086000000107340 AS tcs_payable_account_id,
+                      'single' AS account_tracking,
+                      FALSE AS is_non_advol_tax,
+                      FALSE AS is_state_cess,
+                      NULL AS diff_rate_reason,
+                      '2024-04-01' AS start_date,
+                      '2025-03-31' AS end_date,
+                      'Standard IGST rate of 5%' AS description,
+                      '2024-01-15 08:00:00' AS create_time
+
+                  UNION ALL
+
+                  SELECT
+                      'IGST12',
+                      'IGST 12%',
+                      12,
+                      'tax',
+                      'rate',
+                      'igst',
+                      'Central Board of Indirect Taxes and Customs',
+                      '460000000066001',
+                      FALSE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      132086000000107338,
+                      132086000000107339,
+                      132086000000107340,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      NULL,
+                      '2024-04-01',
+                      '2025-03-31',
+                      'Standard IGST rate of 12%',
+                      '2024-01-15 08:05:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'IGST18',
+                      'IGST 18%',
+                      18,
+                      'tax',
+                      'rate',
+                      'igst',
+                      'Central Board of Indirect Taxes and Customs',
+                      '460000000066001',
+                      FALSE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      132086000000107338,
+                      132086000000107339,
+                      132086000000107340,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      'tds_non_pan',
+                      '2024-04-01',
+                      '2025-03-31',
+                      'Standard IGST rate of 18%',
+                      '2024-01-15 08:10:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'IGST28',
+                      'IGST 28%',
+                      28,
+                      'tax',
+                      'rate',
+                      'igst',
+                      'Central Board of Indirect Taxes and Customs',
+                      '460000000066001',
+                      FALSE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      132086000000107338,
+                      132086000000107339,
+                      132086000000107340,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      NULL,
+                      '2024-04-01',
+                      '2025-03-31',
+                      'Standard IGST rate of 28%',
+                      '2024-01-15 08:15:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'CGST5',
+                      'CGST 5%',
+                      5,
+                      'tax',
+                      'rate',
+                      'cgst',
+                      'Central Board of Indirect Taxes and Customs',
+                      '460000000066001',
+                      FALSE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      132086000000107338,
+                      132086000000107339,
+                      132086000000107340,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      NULL,
+                      '2024-04-01',
+                      '2025-03-31',
+                      'Standard CGST rate of 5%',
+                      '2024-01-16 09:00:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'CGST9',
+                      'CGST 9%',
+                      9,
+                      'tax',
+                      'rate',
+                      'cgst',
+                      'Central Board of Indirect Taxes and Customs',
+                      '460000000066001',
+                      FALSE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      132086000000107338,
+                      132086000000107339,
+                      132086000000107340,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      NULL,
+                      '2024-04-01',
+                      '2025-03-31',
+                      'Standard CGST rate of 9%',
+                      '2024-01-16 09:05:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'SGST5',
+                      'SGST 5%',
+                      5,
+                      'tax',
+                      'rate',
+                      'sgst',
+                      'State Goods and Services Tax Authority',
+                      'STATE-GST-001',
+                      FALSE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      132086000000107338,
+                      132086000000107339,
+                      132086000000107340,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      NULL,
+                      '2024-04-01',
+                      '2025-03-31',
+                      'Standard SGST rate of 5%',
+                      '2024-01-16 09:10:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'SGST9',
+                      'SGST 9%',
+                      9,
+                      'tax',
+                      'rate',
+                      'sgst',
+                      'State Goods and Services Tax Authority',
+                      'STATE-GST-001',
+                      FALSE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      132086000000107338,
+                      132086000000107339,
+                      132086000000107340,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      NULL,
+                      '2024-04-01',
+                      '2025-03-31',
+                      'Standard SGST rate of 9%',
+                      '2024-01-16 09:15:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'VAT5',
+                      'VAT 5%',
+                      5,
+                      'tax',
+                      'rate',
+                      'vat',
+                      NULL,
+                      NULL,
+                      TRUE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      NULL,
+                      NULL,
+                      NULL,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      NULL,
+                      '2024-01-01',
+                      NULL,
+                      'Standard VAT rate of 5%',
+                      '2024-02-01 10:00:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'VAT15',
+                      'VAT 15%',
+                      15,
+                      'tax',
+                      'rate',
+                      'vat',
+                      NULL,
+                      NULL,
+                      TRUE,
+                      132086000000107333,
+                      132086000000107337,
+                      132086000000107337,
+                      NULL,
+                      NULL,
+                      NULL,
+                      'single',
+                      FALSE,
+                      FALSE,
+                      NULL,
+                      '2024-01-01',
+                      NULL,
+                      'Standard VAT rate of 15%',
+                      '2024-02-01 10:05:00'
+              ) AS c
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM taxes t
+                  WHERE t.name = c.name
+              )
+
+      rollback:
+        - delete:
+            tableName: taxes
+            where: >-
+              name IN (
+                'IGST5',
+                'IGST12',
+                'IGST18',
+                'IGST28',
+                'CGST5',
+                'CGST9',
+                'SGST5',
+                'SGST9',
+                'VAT5',
+                'VAT15'
+              )

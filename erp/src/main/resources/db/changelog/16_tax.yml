@@ -1,0 +1,132 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tax
+      author: nam
+      changes:
+        - createTable:
+            tableName: taxes
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: display_name
+                  type: VARCHAR(255)
+
+              - column:
+                  name: percentage
+                  type: DECIMAL(10,4)
+
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: factor
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: specific_type
+                  type: VARCHAR(50)
+
+              - column:
+                  name: authority_name
+                  type: VARCHAR(255)
+
+              - column:
+                  name: authority_id
+                  type: VARCHAR(100)
+
+              - column:
+                  name: is_value_added
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: tax_account_id
+                  type: BIGINT
+
+              - column:
+                  name: purchase_tax_account_id
+                  type: BIGINT
+
+              - column:
+                  name: purchase_tax_expense_account_id
+                  type: BIGINT
+
+              - column:
+                  name: tds_payable_account_id
+                  type: BIGINT
+
+              - column:
+                  name: tcs_receivable_account_id
+                  type: BIGINT
+
+              - column:
+                  name: tcs_payable_account_id
+                  type: BIGINT
+
+              - column:
+                  name: account_tracking
+                  type: VARCHAR(50)
+
+              - column:
+                  name: is_non_advol_tax
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: is_state_cess
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: diff_rate_reason
+                  type: VARCHAR(100)
+
+              - column:
+                  name: start_date
+                  type: DATE
+
+              - column:
+                  name: end_date
+                  type: DATE
+
+              - column:
+                  name: description
+                  type: TEXT
+
+              # Backs AbstractAuditModel from the common-jpa jar; JPA auditing fills both in.
+              - column:
+                  name: create_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_update_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
