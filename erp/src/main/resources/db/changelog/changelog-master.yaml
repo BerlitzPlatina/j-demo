@@ -35,3 +35,7 @@ databaseChangeLog:
       file: db/changelog/17_seed_tax.yml
   - include:
       file: db/changelog/19_rename_audit_columns.yml
+  - include:
+      file: db/changelog/20_legalentity.yml
+  - include:
+      file: db/changelog/21_seed_legalentity.yml

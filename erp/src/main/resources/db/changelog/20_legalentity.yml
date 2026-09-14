@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-legalentity
+      author: nam
+      changes:
+        - createTable:
+            tableName: legal_entities
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: entity_code
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: registered_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: registration_number
+                  type: VARCHAR(55)
+
+              - column:
+                  name: tax_registration_number
+                  type: VARCHAR(55)
+
+              - column:
+                  name: country_code
+                  type: VARCHAR(2)
+
+              - column:
+                  name: base_currency
+                  type: VARCHAR(3)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: entity_status
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: legacy_default
+                  type: BOOLEAN
+                  constraints:
+                    unique: true
+
+              - column:
+                  name: source
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_by
+                  type: INT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_by
+                  type: INT
+
+              # Backs AbstractAuditModel from the common-jpa jar; JPA auditing fills both in.
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false

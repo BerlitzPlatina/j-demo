@@ -1,0 +1,114 @@
+databaseChangeLog:
+  # Development fixtures for legal entities.
+  #
+  # The file owns these rows by `entity_code`, so each insert is guarded with NOT EXISTS on that
+  # business key instead of assuming an empty table. `legacy_default` stays TRUE on exactly one
+  # row and NULL elsewhere because the column is unique and represents a legacy singleton flag.
+
+  - changeSet:
+      id: seed-legal-entities
+      author: nam
+      context: dev
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO legal_entities (
+                  entity_code,
+                  registered_name,
+                  registration_number,
+                  tax_registration_number,
+                  country_code,
+                  base_currency,
+                  entity_status,
+                  legacy_default,
+                  source,
+                  created_by,
+                  updated_by,
+                  created_at,
+                  updated_at
+              )
+              SELECT
+                  c.entity_code,
+                  c.registered_name,
+                  c.registration_number,
+                  c.tax_registration_number,
+                  c.country_code,
+                  c.base_currency,
+                  c.entity_status,
+                  c.legacy_default,
+                  c.source,
+                  c.created_by,
+                  c.updated_by,
+                  c.created_at,
+                  c.updated_at
+              FROM (
+                  SELECT
+                      'LE-VNM-001' AS entity_code,
+                      'Berlitz Vietnam Company Limited' AS registered_name,
+                      '0314829156' AS registration_number,
+                      '0314829156-001' AS tax_registration_number,
+                      'VN' AS country_code,
+                      'VND' AS base_currency,
+                      'ACTIVE' AS entity_status,
+                      TRUE AS legacy_default,
+                      'manual-seed' AS source,
+                      1001 AS created_by,
+                      1001 AS updated_by,
+                      '2024-01-10 08:30:00' AS created_at,
+                      '2024-01-10 08:30:00' AS updated_at
+                  UNION ALL
+                  SELECT
+                      'LE-SGP-002',
+                      'Berlitz Singapore Pte. Ltd.',
+                      '201912345N',
+                      'M90345678X',
+                      'SG',
+                      'SGD',
+                      'ACTIVE',
+                      NULL,
+                      'manual-seed',
+                      1002,
+                      1008,
+                      '2024-02-14 10:00:00',
+                      '2024-08-03 16:25:00'
+                  UNION ALL
+                  SELECT
+                      'LE-DEU-003',
+                      'Berlitz Deutschland GmbH',
+                      'HRB 998877',
+                      'DE345678901',
+                      'DE',
+                      'EUR',
+                      'ACTIVE',
+                      NULL,
+                      'migration-import',
+                      1010,
+                      1016,
+                      '2024-03-18 09:45:00',
+                      '2025-01-12 11:20:00'
+                  UNION ALL
+                  SELECT
+                      'LE-USA-004',
+                      'Berlitz North America Inc.',
+                      'C4720198',
+                      NULL,
+                      'US',
+                      'USD',
+                      'INACTIVE',
+                      NULL,
+                      'migration-import',
+                      1020,
+                      NULL,
+                      '2024-05-22 14:05:00',
+                      '2024-05-22 14:05:00'
+              ) c
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM legal_entities x
+                  WHERE x.entity_code = c.entity_code
+              )
+      rollback:
+        - delete:
+            tableName: legal_entities
+            where: >
+              entity_code IN ('LE-VNM-001', 'LE-SGP-002', 'LE-DEU-003', 'LE-USA-004')
