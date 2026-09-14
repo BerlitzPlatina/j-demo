@@ -1,0 +1,92 @@
+databaseChangeLog:
+  - changeSet:
+      id: rename-audit-columns
+      author: nam
+      changes:
+        - renameColumn:
+            tableName: organizations
+            oldColumnName: create_time
+            newColumnName: created_at
+            columnDataType: DATETIME
+        - renameColumn:
+            tableName: organizations
+            oldColumnName: last_update_time
+            newColumnName: updated_at
+            columnDataType: DATETIME
+
+        - renameColumn:
+            tableName: contacts
+            oldColumnName: create_time
+            newColumnName: created_at
+            columnDataType: DATETIME
+        - renameColumn:
+            tableName: contacts
+            oldColumnName: last_update_time
+            newColumnName: updated_at
+            columnDataType: DATETIME
+
+        - renameColumn:
+            tableName: departments
+            oldColumnName: create_time
+            newColumnName: created_at
+            columnDataType: DATETIME
+        - renameColumn:
+            tableName: departments
+            oldColumnName: last_update_time
+            newColumnName: updated_at
+            columnDataType: DATETIME
+
+        - renameColumn:
+            tableName: designations
+            oldColumnName: create_time
+            newColumnName: created_at
+            columnDataType: DATETIME
+        - renameColumn:
+            tableName: designations
+            oldColumnName: last_update_time
+            newColumnName: updated_at
+            columnDataType: DATETIME
+
+        - renameColumn:
+            tableName: taxes
+            oldColumnName: create_time
+            newColumnName: created_at
+            columnDataType: DATETIME
+        - renameColumn:
+            tableName: taxes
+            oldColumnName: last_update_time
+            newColumnName: updated_at
+            columnDataType: DATETIME
+
+        - renameColumn:
+            tableName: jobs
+            oldColumnName: create_time
+            newColumnName: created_at
+            columnDataType: DATETIME
+        - renameColumn:
+            tableName: jobs
+            oldColumnName: last_update_time
+            newColumnName: updated_at
+            columnDataType: DATETIME
+
+        - renameColumn:
+            tableName: accounts
+            oldColumnName: create_time
+            newColumnName: created_at
+            columnDataType: DATETIME
+        - renameColumn:
+            tableName: accounts
+            oldColumnName: last_update_time
+            newColumnName: updated_at
+            columnDataType: DATETIME
+
+        - renameColumn:
+            tableName: opening_balances
+            oldColumnName: create_time
+            newColumnName: created_at
+            columnDataType: DATETIME
+        - renameColumn:
+            tableName: opening_balances
+            oldColumnName: last_update_time
+            newColumnName: updated_at
+            columnDataType: DATETIME

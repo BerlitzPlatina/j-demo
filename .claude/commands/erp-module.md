@@ -1,5 +1,5 @@
 ---
-description: Scaffold a new ERP feature package (entity, DTOs, mapper, DAO, service, controller, liquibase changelog) following the organization module
+description: Scaffold a new ERP feature package following the refactored ERP conventions used by the current department/designation/tax modules
 argument-hint: <feature> [field:type[:notnull,unique,max=N,min=N] ...]
 allowed-tools: Bash(./scripts/gen-erp-module.sh:*), Bash(./mvnw:*), Read, Edit, Glob, Grep
 ---
@@ -7,10 +7,11 @@ allowed-tools: Bash(./scripts/gen-erp-module.sh:*), Bash(./mvnw:*), Read, Edit, 
 # Scaffold an ERP feature package
 
 The generator is [scripts/gen-erp-module.sh](scripts/gen-erp-module.sh). It mirrors the
-reference module [erp/.../organization/](erp/src/main/java/com/example/erp/organization/):
+current ERP pattern used by the refactored modules under [erp/src/main/java/com/example/erp](erp/src/main/java/com/example/erp):
 entity on `AbstractAuditModel`, four DTO records, static mapper, `JpaRepository` DAO,
-`@Transactional(readOnly = true)` service with a sort allowlist, `ApiResponse`-wrapped
-controller, plus a numbered liquibase changelog registered in `changelog-master.yaml`.
+`@Transactional(readOnly = true)` service with `PageableSupport.sanitize(...)` and
+`Guards.assertNotTaken(...)`, controller mapping through `ApiPaths.*` and `ErpConstants`, and
+an incremented Liquibase changelog registered in `changelog-master.yaml`.
 
 Arguments: `$ARGUMENTS`
 
@@ -24,10 +25,10 @@ Arguments: `$ARGUMENTS`
 3. Preview first: `./scripts/gen-erp-module.sh --dry-run <feature> <fields...>`.
 4. Write it: same command without `--dry-run`, then `--compile` or a separate
    `./mvnw -q -pl erp -am compile`.
-5. Report the created files, the endpoints and the changelog entry. If the feature needs
-   anything the generator does not cover — an extra derived query, a business rule such as
-   organization's "exactly one default row", a lazy `@OneToMany` collection, seed data —
-   add it by hand afterwards and say so.
+5. Report the created files, the endpoints, the route constant, and the changelog entry. If the
+   feature needs anything the generator does not cover — an extra derived query, a business rule
+   such as "exactly one default row", a lazy `@OneToMany` collection, or seed data — add it by
+   hand afterwards and say so.
 
 ## Field syntax
 
@@ -58,6 +59,9 @@ Example:
 
 - A feature is a package, not a Maven module: do not touch `erp/pom.xml` unless the feature
   genuinely needs a new library.
+- Follow the refactored ERP conventions: use `ApiPaths.*` for route prefixes, `ErpConstants` for
+  paging defaults and audit sort names, and `PageableSupport.sanitize(...)` for allowed sort keys.
+- Duplicate-value checks use `Guards.assertNotTaken(...)` instead of ad-hoc validation logic.
 - Entities never appear in a controller signature; mapping happens in the service, so lazy
   fields are still inside the transaction.
 - Never renumber or edit an existing changeSet — they have already run on real databases.

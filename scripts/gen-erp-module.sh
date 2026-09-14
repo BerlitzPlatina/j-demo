@@ -660,17 +660,18 @@ EOF
 
 gen_service() {
     IMPORTS=()
-    local i sortable='"id"' params args uniques=()
+    local i sortable_params='' params args uniques=()
     params=$(ref_params)
     args=$(ref_args)
     for i in $(seq 0 $((NFIELDS - 1))); do
-        [ "${F_KIND[$i]}" = ref ] || sortable="$sortable, \"${F_NAME[$i]}\""
+        [ "${F_KIND[$i]}" = ref ] || sortable_params="${sortable_params:+$sortable_params, }\"${F_NAME[$i]}\""
         [ "${F_UNIQUE[$i]}" = 1 ] && uniques+=("$i")
     done
-    sortable="$sortable, \"createTime\", \"lastUpdateTime\""
 
     add_import com.example.common.web.dto.PageResponse
-    add_import com.example.common.web.exception.ResourceNotFoundException
+    add_import com.example.erp.common.page.PageableSupport
+    add_import com.example.erp.common.support.Entities
+    add_import com.example.erp.common.support.Guards
     add_import "com.example.erp.$PKG.dto.${ENTITY}CreateRequest"
     add_import "com.example.erp.$PKG.dto.${ENTITY}PatchRequest"
     add_import "com.example.erp.$PKG.dto.${ENTITY}Response"
@@ -679,9 +680,7 @@ gen_service() {
     add_import "com.example.erp.$PKG.mapper.${ENTITY}Mapper"
     add_import "com.example.erp.$PKG.repository.${ENTITY}Dao"
     add_import org.springframework.data.domain.Page
-    add_import org.springframework.data.domain.PageRequest
     add_import org.springframework.data.domain.Pageable
-    add_import org.springframework.data.domain.Sort
     add_import org.springframework.stereotype.Service
     add_import org.springframework.transaction.annotation.Transactional
     add_import java.util.Set
@@ -713,10 +712,10 @@ gen_service() {
 public class ${ENTITY}Service {
 
     /** Properties a client may sort by; anything else is rejected instead of reaching the SQL. */
-    private static final Set<String> SORTABLE_FIELDS = Set.of($sortable);
+    private static final Set<String> SORTABLE_FIELDS = PageableSupport.sortableFields($sortable_params);
 
-    /** Paging needs a deterministic order; fall back to the id when the caller gives none. */
-    private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "id");
+    /** How this entity is named in a 404 or a duplicate-value message. */
+    private static final String ENTITY = "${ENTITY}";
 
     private final ${ENTITY}Dao ${CAMEL}Dao;
 EOF
@@ -757,7 +756,8 @@ EOF
     /** One page, optionally filtered by a case-insensitive ${F_NAME[$KEYWORD_IDX]} fragment. */
     public PageResponse<${ENTITY}Response> search(String keyword, Pageable pageable) {
         Page<$ENTITY> page = ${CAMEL}Dao.findBy${F_PASCAL[$KEYWORD_IDX]}ContainingIgnoreCase(
-                StringUtils.hasText(keyword) ? keyword.trim() : "", withSafeSort(pageable));
+                StringUtils.hasText(keyword) ? keyword.trim() : "",
+                PageableSupport.sanitize(pageable, SORTABLE_FIELDS));
         return PageResponse.from(page, ${ENTITY}Mapper::toResponse);
     }
 EOF
@@ -766,7 +766,7 @@ EOF
 
     /** One page, in a deterministic order. */
     public PageResponse<${ENTITY}Response> search(Pageable pageable) {
-        Page<$ENTITY> page = ${CAMEL}Dao.findAll(withSafeSort(pageable));
+        Page<$ENTITY> page = ${CAMEL}Dao.findAll(PageableSupport.sanitize(pageable, SORTABLE_FIELDS));
         return PageResponse.from(page, ${ENTITY}Mapper::toResponse);
     }
 EOF
@@ -787,10 +787,8 @@ EOF
             local ic=''
             [ "${F_JAVA[$i]}" = String ] && ic=IgnoreCase
             cat <<EOF
-        if (${CAMEL}Dao.existsBy${F_PASCAL[$i]}$ic(request.${F_NAME[$i]}())) {
-            throw new IllegalArgumentException(
-                    "${F_NAME[$i]}: a $CAMEL with ${F_NAME[$i]} '" + request.${F_NAME[$i]}() + "' already exists");
-        }
+        Guards.assertNotTaken(${CAMEL}Dao.existsBy${F_PASCAL[$i]}$ic(request.${F_NAME[$i]}()),
+                "${F_NAME[$i]}", "a $CAMEL", request.${F_NAME[$i]}());
 EOF
         done
         for i in $(seq 0 $((NFIELDS - 1))); do
@@ -853,8 +851,7 @@ EOF
     // ---------------------------------------------------------------- helper
 
     private $ENTITY findOrThrow(Long id) {
-        return ${CAMEL}Dao.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("$ENTITY not found with id: " + id));
+        return Entities.findOrThrow(${CAMEL}Dao, id, ENTITY);
     }
 EOF
         for i in "${uniques[@]:-}"; do
@@ -864,10 +861,8 @@ EOF
             cat <<EOF
 
     private void assert${F_PASCAL[$i]}Free(${F_JAVA[$i]} ${F_NAME[$i]}, Long id) {
-        if (${CAMEL}Dao.existsBy${F_PASCAL[$i]}${ic}AndIdNot(${F_NAME[$i]}, id)) {
-            throw new IllegalArgumentException(
-                    "${F_NAME[$i]}: a $CAMEL with ${F_NAME[$i]} '" + ${F_NAME[$i]} + "' already exists");
-        }
+        Guards.assertNotTaken(${CAMEL}Dao.existsBy${F_PASCAL[$i]}${ic}AndIdNot(${F_NAME[$i]}, id),
+                "${F_NAME[$i]}", "a $CAMEL", ${F_NAME[$i]});
     }
 EOF
         done
@@ -887,27 +882,7 @@ EOF
     }
 EOF
         done
-        cat <<'EOF'
-
-    /**
-     * Rejects a sort on a property that is not in {@link #SORTABLE_FIELDS}, and supplies a
-     * deterministic order when the request carries none.
-     */
-    private Pageable withSafeSort(Pageable pageable) {
-        Sort sort = pageable.getSort();
-        if (sort.isUnsorted()) {
-            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), DEFAULT_SORT);
-        }
-        sort.forEach(order -> {
-            if (!SORTABLE_FIELDS.contains(order.getProperty())) {
-                throw new IllegalArgumentException("sort: unsupported property '" + order.getProperty()
-                        + "', allowed: " + SORTABLE_FIELDS);
-            }
-        });
-        return pageable;
-    }
-}
-EOF
+        echo "}"
     } | write "erp/src/main/java/com/example/erp/$PKG/service/${ENTITY}Service.java"
 }
 
@@ -917,6 +892,8 @@ gen_controller() {
     IMPORTS=()
     add_import com.example.common.web.dto.ApiResponse
     add_import com.example.common.web.dto.PageResponse
+    add_import com.example.erp.common.constant.ApiPaths
+    add_import com.example.erp.common.constant.ErpConstants
     add_import "com.example.erp.$PKG.dto.${ENTITY}CreateRequest"
     add_import "com.example.erp.$PKG.dto.${ENTITY}PatchRequest"
     add_import "com.example.erp.$PKG.dto.${ENTITY}Response"
@@ -939,6 +916,9 @@ gen_controller() {
     add_import org.springframework.web.bind.annotation.RestController
     [ $KEYWORD_IDX -ge 0 ] && add_import org.springframework.web.bind.annotation.RequestParam
 
+    local path_const
+    path_const=$(printf '%s' "$(pluralize "$(to_snake "$FEATURE")")" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+
     {
         echo "package com.example.erp.$PKG.controller;"
         echo
@@ -950,7 +930,7 @@ gen_controller() {
  * {@link ${ENTITY}Response} transfer objects; entities never leave the service layer.
  */
 @RestController
-@RequestMapping("$ROUTE")
+@RequestMapping(ApiPaths.${path_const})
 public class ${ENTITY}Controller {
 
     private final ${ENTITY}Service ${CAMEL}Service;
@@ -963,12 +943,13 @@ EOF
             cat <<EOF
 
     /**
-     * GET $ROUTE?keyword=abc&page=0&size=10&sort=${F_NAME[$KEYWORD_IDX]},asc
+     * GET ${ROUTE}?keyword=abc&page=0&size=10&sort=${F_NAME[$KEYWORD_IDX]},asc
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<${ENTITY}Response>>> get$(pluralize "$ENTITY")(
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = ErpConstants.DEFAULT_PAGE_SIZE, sort = ErpConstants.ID,
+                    direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(${CAMEL}Service.search(keyword, pageable)));
     }
 EOF
@@ -976,11 +957,12 @@ EOF
             cat <<EOF
 
     /**
-     * GET $ROUTE?page=0&size=10&sort=id,desc
+     * GET ${ROUTE}?page=0&size=10&sort=id,desc
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<${ENTITY}Response>>> get$(pluralize "$ENTITY")(
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = ErpConstants.DEFAULT_PAGE_SIZE, sort = ErpConstants.ID,
+                    direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(${CAMEL}Service.search(pageable)));
     }
 EOF
@@ -1085,13 +1067,13 @@ EOF
 
               # Backs AbstractAuditModel from the common-jpa jar; JPA auditing fills both in.
               - column:
-                  name: create_time
+                  name: created_at
                   type: DATETIME
                   constraints:
                     nullable: false
 
               - column:
-                  name: last_update_time
+                  name: updated_at
                   type: DATETIME
                   constraints:
                     nullable: false

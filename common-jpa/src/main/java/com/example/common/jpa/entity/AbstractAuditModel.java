@@ -26,21 +26,42 @@ public abstract class AbstractAuditModel implements Serializable {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     /**
      * Creation time
      */
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "create_time", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     @CreatedDate
-    private Date createTime;
+    private Date createdAt;
 
     /**
      * Last update time
      */
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "last_update_time", nullable = false)
+    @Column(name = "updated_at", nullable = false)
     @LastModifiedDate
-    private Date lastUpdateTime;
+    private Date updatedAt;
+
+    /**
+     * Backward-compatible alias for existing code that still uses the old property
+     * names.
+     */
+    public Date getCreateTime() {
+        return createdAt;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createdAt = createTime;
+    }
+
+    public Date getLastUpdateTime() {
+        return updatedAt;
+    }
+
+    public void setLastUpdateTime(Date lastUpdateTime) {
+        this.updatedAt = lastUpdateTime;
+    }
 }
