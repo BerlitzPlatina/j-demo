@@ -1,0 +1,73 @@
+databaseChangeLog:
+  # Development fixtures for positions.
+  #
+  # Rows are owned by legacy_position_id - the only unique column on the table - and the guard
+  # also covers (legal_entity_id, position_code), the pair the source schema keys on, so neither
+  # identity can be duplicated by a re-run.
+  #
+  # job_id is optional: the catalog carries a job_code that is LEFT JOINed on
+  # (legal_entity_id, job_code), and three rows leave it NULL so the unassigned case is
+  # exercised. The table has no created_by/updated_by columns, so neither is inserted.
+
+  - changeSet:
+      id: seed-positions
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        # legal_entity_id is NOT NULL, so there is nothing to attach a position to otherwise.
+        - sqlCheck:
+            expectedResult: 1
+            sql: SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM legal_entities
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO positions (
+                  legal_entity_id, job_id, legacy_position_id, position_code,
+                  legacy_position_code, position_name, position_status,
+                  reference_quality, source, created_at, updated_at
+              )
+              SELECT
+                  le.id, j.id, c.legacy_position_id, c.position_code,
+                  c.legacy_position_code, c.position_name, c.position_status,
+                  'legacy_position_identity_only', 'legacy_position_import',
+                  c.created_at, c.updated_at
+              FROM (
+                            SELECT 'LE-VNM-001' AS entity_code, 'JOB-TEACHER'    AS job_code, 9001 AS legacy_position_id, 'POS-VN-0001' AS position_code, 'LP-0001' AS legacy_position_code, 'English Teacher - District 1'        AS position_name, 'active'   AS position_status, '2024-03-04 08:15:00' AS created_at, '2024-03-04 08:15:00' AS updated_at
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-TEACHER',               9002,                        'POS-VN-0002',                 'LP-0002',                       'English Teacher - District 7',                          'active',                     '2024-03-04 08:15:00',               '2024-09-11 10:40:00'
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-SR-TEACHER',            9003,                        'POS-VN-0003',                 'LP-0003',                       'Senior English Teacher - District 1',                   'active',                     '2024-03-04 08:15:00',               '2024-03-04 08:15:00'
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-CENTRE-MGR',            9004,                        'POS-VN-0004',                 NULL,                            'Centre Manager - District 1',                           'active',                     '2024-04-22 09:00:00',               '2025-01-15 16:30:00'
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-RECEPTION',             9005,                        'POS-VN-0005',                 'LP-0011',                       'Centre Receptionist - District 7',                      'active',                     '2024-04-22 09:00:00',               '2024-04-22 09:00:00'
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-SALES',                 9006,                        'POS-VN-0006',                 'LP-0012',                       'Sales Consultant - Head Office',                        'inactive',                   '2024-05-20 13:00:00',               '2025-02-03 11:05:00'
+                  UNION ALL SELECT 'LE-VNM-001',                NULL,                        9007,                        'POS-VN-0007',                 NULL,                            'Curriculum Coordinator - unmapped legacy role',         'active',                     '2024-06-11 10:20:00',               '2024-06-11 10:20:00'
+                  UNION ALL SELECT 'LE-SGP-002',                'JOB-TEACHER',               9101,                        'POS-SG-0001',                 'LP-1001',                       'English Teacher - Orchard',                             'active',                     '2024-06-05 10:45:00',               '2024-06-05 10:45:00'
+                  UNION ALL SELECT 'LE-SGP-002',                'JOB-ADMIN',                 9102,                        'POS-SG-0002',                 'LP-1002',                       'Operations Administrator - Orchard',                    'active',                     '2024-06-05 10:45:00',               '2024-12-02 08:50:00'
+                  UNION ALL SELECT 'LE-SGP-002',                'JOB-ACCOUNT',               9103,                        'POS-SG-0003',                 NULL,                            'Accountant - Regional Finance',                         'active',                     '2024-08-21 14:35:00',               '2024-08-21 14:35:00'
+                  UNION ALL SELECT 'LE-SGP-002',                NULL,                        9104,                        'POS-SG-0004',                 'LP-1009',                       'Regional Trainer - unmapped legacy role',               'archived',                   '2024-09-30 15:10:00',               '2025-03-18 09:25:00'
+                  UNION ALL SELECT 'LE-DEU-003',                'JOB-TEACHER',               9201,                        'POS-DE-0001',                 'LP-2001',                       'English Teacher - Berlin Mitte',                        'active',                     '2024-07-10 11:00:00',               '2024-07-10 11:00:00'
+                  UNION ALL SELECT 'LE-DEU-003',                'JOB-HR',                    9202,                        'POS-DE-0002',                 NULL,                            'HR Officer - Berlin Mitte',                             'active',                     '2025-01-22 13:40:00',               '2025-01-22 13:40:00'
+                  UNION ALL SELECT 'LE-DEU-003',                NULL,                        9203,                        'POS-DE-0003',                 'LP-2010',                       'Facilities Assistant - unmapped legacy role',           'inactive',                   '2025-02-14 08:05:00',               '2025-02-14 08:05:00'
+              ) c
+              JOIN legal_entities le
+                  ON le.entity_code = c.entity_code
+              LEFT JOIN jobs j
+                  ON j.legal_entity_id = le.id
+                 AND j.job_code = c.job_code
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM positions x
+                  WHERE x.legacy_position_id = c.legacy_position_id
+              )
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM positions y
+                  WHERE y.legal_entity_id = le.id
+                    AND y.position_code = c.position_code
+              )
+      rollback:
+        - delete:
+            tableName: positions
+            where: >
+              legacy_position_id IN (9001, 9002, 9003, 9004, 9005, 9006, 9007,
+                                     9101, 9102, 9103, 9104,
+                                     9201, 9202, 9203)

@@ -1,5 +1,7 @@
 package com.example.erp.legalentity.entity;
 
+import org.hibernate.annotations.BatchSize;
+
 import com.example.common.jpa.entity.AbstractAuditModel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,7 +16,8 @@ import lombok.ToString;
 /**
  * The {@code legal_entities} table.
  * <p>
- * The id and the two audit timestamps come from {@link AbstractAuditModel}, so they are not
+ * The id and the two audit timestamps come from {@link AbstractAuditModel}, so
+ * they are not
  * repeated here.
  */
 @Entity
@@ -25,6 +28,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
+@BatchSize(size = 5)
 public class LegalEntity extends AbstractAuditModel {
 
     @Column(name = "entity_code", nullable = false, unique = true)

@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: create-job
+      id: create-position
       author: nam
       changes:
         - createTable:
-            tableName: jobs
+            tableName: positions
             columns:
               - column:
                   name: id
@@ -21,19 +21,34 @@ databaseChangeLog:
                     nullable: false
 
               - column:
-                  name: job_code
+                  name: job_id
+                  type: BIGINT
+
+              - column:
+                  name: legacy_position_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: position_code
                   type: VARCHAR(32)
                   constraints:
                     nullable: false
 
               - column:
-                  name: job_name
-                  type: VARCHAR(120)
+                  name: legacy_position_code
+                  type: VARCHAR(20)
+
+              - column:
+                  name: position_name
+                  type: TEXT
                   constraints:
                     nullable: false
 
               - column:
-                  name: job_status
+                  name: position_status
                   type: VARCHAR(16)
                   constraints:
                     nullable: false
@@ -50,16 +65,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
-              - column:
-                  name: created_by
-                  type: INT
-                  constraints:
-                    nullable: false
-
-              - column:
-                  name: updated_by
-                  type: INT
-
               # Backs AbstractAuditModel from the common-jpa jar; JPA auditing fills both in.
               - column:
                   name: created_at
@@ -74,12 +79,23 @@ databaseChangeLog:
                     nullable: false
 
   - changeSet:
-      id: add-job-legal_entity_id-fk
+      id: add-position-legal_entity-fk
       author: nam
       changes:
         - addForeignKeyConstraint:
-            baseTableName: jobs
+            baseTableName: positions
             baseColumnNames: legal_entity_id
             referencedTableName: legal_entities
             referencedColumnNames: id
-            constraintName: fk_job_legal_entity_id
+            constraintName: fk_position_legal_entity
+
+  - changeSet:
+      id: add-position-job-fk
+      author: nam
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: positions
+            baseColumnNames: job_id
+            referencedTableName: jobs
+            referencedColumnNames: id
+            constraintName: fk_position_job

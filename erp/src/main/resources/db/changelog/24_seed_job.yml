@@ -1,0 +1,60 @@
+databaseChangeLog:
+  # Development fixtures for jobs.
+  #
+  # Rows are owned by (entity_code, job_code) - the business key of the table - so the insert is
+  # guarded with NOT EXISTS on that pair rather than on the table being empty. legal_entity_id is
+  # resolved by joining legal_entities on entity_code, never hardcoded.
+  #
+  # Seeded before 25_seed_position.yml, which hangs its positions off these job codes.
+
+  - changeSet:
+      id: seed-jobs
+      author: nam
+      context: dev
+      preConditions:
+        - onFail: MARK_RAN
+        # legal_entity_id is NOT NULL, so there is nothing to attach a job to otherwise.
+        - sqlCheck:
+            expectedResult: 1
+            sql: SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM legal_entities
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO jobs (
+                  legal_entity_id, job_code, job_name, job_status,
+                  reference_quality, source, created_by, updated_by, created_at, updated_at
+              )
+              SELECT
+                  le.id, c.job_code, c.job_name, c.job_status,
+                  'greenfield_normalized_only', 'greenfield_normalized',
+                  c.created_by, c.updated_by, c.created_at, c.updated_at
+              FROM (
+                            SELECT 'LE-VNM-001' AS entity_code, 'JOB-TEACHER'    AS job_code, 'English Teacher'          AS job_name, 'active'   AS job_status, 1001 AS created_by, 1001 AS updated_by, '2024-03-01 08:00:00' AS created_at, '2024-03-01 08:00:00' AS updated_at
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-SR-TEACHER',            'Senior English Teacher',                'active',                1001,                1004,                '2024-03-01 08:00:00',               '2024-09-10 15:20:00'
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-CENTRE-MGR',            'Centre Manager',                        'active',                1001,                NULL,                '2024-03-01 08:00:00',               '2024-03-01 08:00:00'
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-RECEPTION',             'Centre Receptionist',                   'active',                1002,                NULL,                '2024-04-16 09:30:00',               '2024-04-16 09:30:00'
+                  UNION ALL SELECT 'LE-VNM-001',                'JOB-SALES',                 'Sales Consultant',                      'inactive',              1002,                1007,                '2024-04-16 09:30:00',               '2025-02-03 11:05:00'
+                  UNION ALL SELECT 'LE-SGP-002',                'JOB-TEACHER',               'English Teacher',                       'active',                1002,                1002,                '2024-06-03 10:15:00',               '2024-06-03 10:15:00'
+                  UNION ALL SELECT 'LE-SGP-002',                'JOB-ADMIN',                 'Operations Administrator',              'active',                1002,                NULL,                '2024-06-03 10:15:00',               '2024-06-03 10:15:00'
+                  UNION ALL SELECT 'LE-SGP-002',                'JOB-ACCOUNT',               'Accountant',                            'active',                1008,                1008,                '2024-08-19 14:00:00',               '2024-11-22 09:10:00'
+                  UNION ALL SELECT 'LE-DEU-003',                'JOB-TEACHER',               'English Teacher',                       'active',                1010,                NULL,                '2024-07-08 11:45:00',               '2024-07-08 11:45:00'
+                  UNION ALL SELECT 'LE-DEU-003',                'JOB-HR',                    'HR Officer',                            'active',                1016,                1016,                '2025-01-20 13:25:00',               '2025-01-20 13:25:00'
+              ) c
+              JOIN legal_entities le
+                  ON le.entity_code = c.entity_code
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM jobs x
+                  WHERE x.legal_entity_id = le.id
+                    AND x.job_code = c.job_code
+              )
+      rollback:
+        - delete:
+            tableName: jobs
+            where: >
+              job_code IN ('JOB-TEACHER', 'JOB-SR-TEACHER', 'JOB-CENTRE-MGR', 'JOB-RECEPTION',
+                           'JOB-SALES', 'JOB-ADMIN', 'JOB-ACCOUNT', 'JOB-HR')
+              AND legal_entity_id IN (
+                  SELECT id FROM legal_entities
+                  WHERE entity_code IN ('LE-VNM-001', 'LE-SGP-002', 'LE-DEU-003')
+              )

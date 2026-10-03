@@ -59,8 +59,7 @@ public class ContactController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ContactResponse>>> getContacts(
             @ModelAttribute ContactSearchRequest request,
-            @PageableDefault(size = ErpConstants.DEFAULT_PAGE_SIZE, sort = ErpConstants.ID,
-                    direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = ErpConstants.DEFAULT_PAGE_SIZE, sort = ErpConstants.ID, direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(contactService.search(request, pageable)));
     }
 

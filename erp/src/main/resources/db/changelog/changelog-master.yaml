@@ -41,3 +41,9 @@ databaseChangeLog:
       file: db/changelog/21_seed_legalentity.yml
   - include:
       file: db/changelog/22_job.yml
+  - include:
+      file: db/changelog/23_position.yml
+  - include:
+      file: db/changelog/24_seed_job.yml
+  - include:
+      file: db/changelog/25_seed_position.yml
