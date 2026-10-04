@@ -36,6 +36,7 @@
         <module>migration-flyway</module>
         <module>gateway</module>
         <module>erp</module>
+        <module>keycloak</module>
     </modules>
 
 </project>

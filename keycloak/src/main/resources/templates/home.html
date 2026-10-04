@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>School - Home</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="card wide">
+    <div class="row">
+        <h1>Login successful</h1>
+        <!-- th:action adds the CSRF token; logout also ends the Keycloak session. -->
+        <form th:action="@{/logout}" method="post">
+            <button class="btn secondary" type="submit">Logout</button>
+        </form>
+    </div>
+
+    <table>
+        <tr><th>Username</th><td th:text="${username}">nam</td></tr>
+        <tr><th>Name</th><td th:text="${fullName}">-</td></tr>
+        <tr><th>Email</th><td th:text="${email}">-</td></tr>
+        <tr><th>Access token expires</th><td th:text="${expiresAt}">-</td></tr>
+    </table>
+
+    <h2>Access token</h2>
+    <textarea readonly rows="6" th:text="${accessToken}"></textarea>
+
+    <h2>ID token claims</h2>
+    <table>
+        <tr th:each="claim : ${claims}">
+            <th th:text="${claim.key}">key</th>
+            <td th:text="${claim.value}">value</td>
+        </tr>
+    </table>
+</main>
+</body>
+</html>

@@ -1,6 +1,6 @@
 server:
   # Overridable so docker-compose does not depend on the value baked in here.
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
@@ -13,7 +13,8 @@ spring:
           # Spring reads the realm's OIDC discovery document from this url on startup and gets the
           # signing keys (JWKS) from it, so the public key never has to be configured by hand.
           # The realm runs on the host; from inside the devcontainer that is the bridge gateway.
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://172.17.0.1:8180/realms/demo}
+          # issuer-uri: ${KEYCLOAK_ISSUER_URI:http://172.17.0.1:8180/realms/demo}
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://172.17.0.1:8180/realms/school}
 
 keycloak:
   # Which endpoints need no token. This is per-service configuration on purpose: the shared
@@ -23,9 +24,9 @@ keycloak:
     - /api/public
   # Only tokens actually meant for this API are accepted; a token minted for another client is
   # rejected even when the signature and the issuer are valid.
-  audience: ${KEYCLOAK_AUDIENCE:spring-api}
+  audience: ${KEYCLOAK_AUDIENCE:school-web}
   # Client the login endpoint uses when exchanging credentials for a token. Defaults to audience.
-  client-id: ${KEYCLOAK_CLIENT_ID:spring-api}
+  client-id: ${KEYCLOAK_CLIENT_ID:school-web}
   # Leave empty for a public client; required for a confidential one.
   client-secret: ${KEYCLOAK_CLIENT_SECRET:}
 

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>School - Sign in</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="card">
+    <h1>School</h1>
+    <p class="muted">Sign in with your Keycloak account.</p>
+    <a class="btn" th:href="@{/oauth2/authorization/keycloak}">Login with Keycloak</a>
+</main>
+</body>
+</html>
