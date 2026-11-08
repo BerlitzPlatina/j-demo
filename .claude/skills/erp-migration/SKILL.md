@@ -28,15 +28,39 @@ Reference files to copy the style from: [4_contact.yml](erp/src/main/resources/d
 - Compile and, when a database is reachable, start the app once so `validate` proves the schema
   matches the entities: `./mvnw -q -pl erp -am compile`.
 
+## Identifiers: `id` inside the service, `code` across services
+
+The system is being designed as microservices, and the two keys of a row do different jobs:
+
+- **`id`** - `BIGINT` autoIncrement primary key. Internal to the service that owns the table:
+  foreign keys between that service's own tables, JPA relations, its own `/{id}` endpoints.
+  It never leaves the service as a reference: a number from one database means nothing in
+  another, and two services' ids can collide.
+- **`code`** - `VARCHAR(50)`, NOT NULL, unique (`uk_<table-singular>_code`), immutable once
+  inserted. The business key other services, events, imports and seeds use to point at a row.
+  Every root entity carries one; child and join rows written only through their parent do not.
+
+So, for every reference column:
+
+| Points at | Column | Constraint |
+| --- | --- | --- |
+| a table **in the same service** | `<x>_id BIGINT` | `addForeignKeyConstraint` |
+| an entity **owned by another service** | `<x>_code VARCHAR(50)` | **no FK** (it lives in another database); index it if queries filter on it |
+
+Never store another service's numeric id, even when a payload hands you one. If it is not
+clear whether the referenced entity lives in this service or another, ask before choosing.
+
 ## Reading a JSON payload into a schema
 
 Work from the payload the user gives. Decide per field:
 
 | JSON | Column |
 | --- | --- |
-| external id string pointing at **another** entity (`location_id`, `currency_id`) | `VARCHAR(50)` - it is a foreign system's id, not our `BIGINT` PK |
+| reference to an entity **owned by another service** (`location_id`, `currency_id`) | its code, `<x>_code VARCHAR(50)`, no FK - see Identifiers above; if the payload carries only the foreign id, ask for the code |
+| reference to a table **in this service** | `<x>_id BIGINT` + foreign key |
 | external id string for **this row itself** (`opening_balance_id`, `account_split_id`) | no column - see the judgement call below |
 | our own row id | `BIGINT` autoIncrement primary key, always named `id` |
+| the row's business key | `code VARCHAR(50)` NOT NULL unique, on every root entity |
 | money (`amount`, `bcy_amount`, `total`, balances) | `DECIMAL(19,4)` |
 | rate (`exchange_rate`) | `DECIMAL(19,6)` |
 | percentage (`tax_percentage`) | `DECIMAL(7,4)` |
@@ -85,7 +109,8 @@ Five judgement calls to make explicitly and mention in the report:
   table here - they are references outward, not duplicates of this row's key.
 
   Dropping them takes the table's business key with it, so replace it in the same breath or the
-  table becomes unmatchable on re-import: `accounts` keys on `account_name` (made NOT NULL and
+  table becomes unmatchable on re-import. For a root entity that replacement is its `code`
+  column. Older tables predate that rule and key on other columns: `accounts` keys on `account_name` (made NOT NULL and
   unique), `opening_balances` on `(location_id, balance_date)`, a join table on its pair of
   foreign keys. Seed guards and rollbacks must name those same business columns - key them on an
   upstream id and they break silently the day that column is removed.
@@ -181,6 +206,11 @@ that happens to share a word, not this payload's parent.
 No upstream id is stored: `opening_balance_id` and `account_split_id` would only restate each
 row's own `id`. `location_id` and `currency_id` stay, because they name a branch and a currency
 elsewhere rather than this row.
+
+This example predates the id/code rule and is kept as it was applied - never edit those
+changeSets. Written today, the branch would be referenced as `location_code VARCHAR(50)`,
+`currency_id` would be dropped because `currency_code` already references the currency, and
+`opening_balances` / `accounts` would each get a `code` column as their business key.
 
 ## Reporting back
 

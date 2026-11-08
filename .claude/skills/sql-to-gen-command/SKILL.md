@@ -101,6 +101,22 @@ The ref target must already exist as a feature package - the entity is imported 
 - `CHECK` constraints, enums, `ON DELETE`/`ON UPDATE` actions (FKs are emitted without them)
 - custom `DECIMAL` precision
 
+## Identifiers: `id` inside the service, `code` across services
+
+The system is being designed as microservices. `id` is internal to the owning service, and
+`code` is the business key other services use. The conversion has to follow that:
+
+- **Every root entity gets `code:string:notnull,unique,max=50`.** If the source table has a
+  natural code column (`job_code`, `entity_code`), say whether it becomes `code` or stays next
+  to it; if it has none, add `code` and list that in the output.
+- **FK to a table in the same service** → `<relation>:'ref(Target)'`, as below.
+- **FK or id column pointing at another service's entity** → `<x>Code:string:notnull,max=50`,
+  no `ref`. Report the source FK as dropped on purpose: a constraint cannot cross databases.
+- If the source schema does not say which service owns a referenced table, ask.
+- Add to the manual follow-up list, every time: `updatable = false` on `code`, `code` removed
+  from the Update/Patch DTOs and mapper, `findByCode` in the DAO, and a `GET .../code/{code}`
+  endpoint.
+
 ## Conversion Logic
 
 1. **Entity name** - table name, prefix stripped, singular, kebab-case or PascalCase.
@@ -109,7 +125,8 @@ The ref target must already exist as a feature package - the entity is imported 
    `camelCase` for Java and `snake_case` for the column.
 3. **Types** - use the table above.
 4. **Constraints** - `notnull` first, then `unique`, then `max=`/`min=`.
-5. **FKs** - relation name + quoted `ref(Target)`.
+5. **FKs** - same service: relation name + quoted `ref(Target)`; another service: `<x>Code` string.
+   Add `code` if the entity has none.
 6. Report anything from the "not supported" list that the source schema contained.
 
 ## Examples

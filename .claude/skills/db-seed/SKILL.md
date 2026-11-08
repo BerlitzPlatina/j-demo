@@ -18,7 +18,8 @@ Read the table's own changelog first (`<n>_<feature>.yml`) and confirm from it:
 1. **Column names and nullability** - never guess. Audit columns differ by table age:
    older tables use `create_time` / `last_update_time`, newer ones `created_at` / `updated_at`
    plus `created_by` / `updated_by` (see `19_rename_audit_columns.yml`).
-2. **The business key** - the NOT NULL unique column, or the composite unique key. This is what
+2. **The business key** - the `code` column on a root entity (see Identifiers below);
+   otherwise the NOT NULL unique column, or the composite unique key. This is what
    the guard and the rollback key on. If the table has no unique key at all, ask the user which
    column identifies a row before writing.
 3. **Every NOT NULL column without a default** - each one must appear in the INSERT.
@@ -27,6 +28,19 @@ Read the table's own changelog first (`<n>_<feature>.yml`) and confirm from it:
 
 Check the master changelog for the next free file number, and place the include **after** the
 tables the seed fills.
+
+## Identifiers: `id` inside the service, `code` across services
+
+The system is being designed as microservices. `id` is the owning service's internal key;
+`code` is the stable business key every other service uses. In a seed that means:
+
+- Guard and roll back on `code` for a root table - it is fixed across environments, while the
+  `id` a row gets depends on insert order.
+- Parent **in the same service**: resolve its `id` by joining on the parent's `code`
+  (`JOIN items i ON i.code = c.item_code`). Never write the literal id.
+- Entity **owned by another service** (an `<x>_code` column, no FK): write the code as a plain
+  literal. There is no table to join to in this database, so do not invent one; use codes the
+  owning service's own seed actually creates, and say which ones in the file comment.
 
 ## The file shape
 
@@ -173,6 +187,7 @@ Then append to `changelog-master.yaml`:
 - [ ] every NOT NULL column without a default is in the INSERT
 - [ ] guard covers **every** unique key, not just the first
 - [ ] no literal foreign key id anywhere
+- [ ] root table guarded on `code`; cross-service references written as codes, never ids
 - [ ] rollback keys on the same business key as the guard
 - [ ] include appended to `changelog-master.yaml`, after the tables it fills
 - [ ] audit column names taken from this table's own changelog

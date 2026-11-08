@@ -30,6 +30,23 @@ Arguments: `$ARGUMENTS`
    such as "exactly one default row", a lazy `@OneToMany` collection, or seed data — add it by
    hand afterwards and say so.
 
+## Identifiers: `id` inside the service, `code` across services
+
+The system is being designed as microservices. `id` (the generated `BIGINT` PK) is used only
+inside the owning service. `code` is the business key other services use to reference a row.
+
+- A root entity always has `code:string:notnull,unique,max=50`. If the user's field list leaves
+  it out, add it and say so in the report - it is the house convention, not an invented field.
+- `ref(Other)` only for an entity **in the same service**. An entity owned by another service
+  is referenced by its code: `<x>Code:string:notnull,max=50`. That gives a plain column with no
+  FK and no `@ManyToOne`. Ask if it is unclear which service owns the target.
+- The generator does not know these rules yet, so after generating, edit by hand:
+  1. entity: `@Column(name = "code", ..., updatable = false)` - a code never changes once
+     another service may hold it;
+  2. drop `code` from the Update and Patch DTOs and from the mapper's `replace`/`merge`;
+  3. DAO: `Optional<X> findByCode(String code)`;
+  4. service + controller: `GET <route>/code/{code}`, the lookup other services call.
+
 ## Field syntax
 
 `name:type[:constraint,...]`
@@ -65,4 +82,5 @@ Example:
 - Entities never appear in a controller signature; mapping happens in the service, so lazy
   fields are still inside the transaction.
 - Never renumber or edit an existing changeSet — they have already run on real databases.
+- Never expose another service's numeric id as a reference, in a column or a DTO; use its code.
 - Comments and javadoc in English, explaining the *why*, and explicit imports (no wildcards).
