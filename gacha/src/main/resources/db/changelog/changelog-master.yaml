@@ -1,1 +1,5 @@
 databaseChangeLog:
+  - include:
+      file: db/changelog/1_banner.yml
+  - include:
+      file: db/changelog/2_seed_banner.yml

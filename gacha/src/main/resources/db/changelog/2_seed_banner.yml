@@ -1,0 +1,105 @@
+databaseChangeLog:
+  # Development seed data for the banner module.
+  #
+  # `banners.code` is the business key owned by this seed; the guard uses NOT EXISTS on it
+  # instead of checking whether the table is empty.
+  - changeSet:
+      id: seed-banners
+      author: nam
+      context: dev
+
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO banners (
+                  code, name, description, banner_type, status, image_url,
+                  start_time, end_time, cost_per_pull, currency,
+                  hard_pity, soft_pity_start, guaranteed_featured, display_order,
+                  created_at, updated_at
+              )
+              SELECT
+                  c.code, c.name, c.description, c.banner_type, c.status, c.image_url,
+                  c.start_time, c.end_time, c.cost_per_pull, c.currency,
+                  c.hard_pity, c.soft_pity_start, c.guaranteed_featured, c.display_order,
+                  c.created_at, c.created_at
+              FROM (
+                  SELECT
+                      'STD-WANDERLUST' AS code,
+                      'Wanderlust Invocation' AS name,
+                      'Permanent standard banner' AS description,
+                      'STANDARD' AS banner_type,
+                      'PUBLISHED' AS status,
+                      'https://cdn.example.com/banners/std-wanderlust.png' AS image_url,
+                      '2026-01-01 00:00:00' AS start_time,
+                      NULL AS end_time,
+                      160 AS cost_per_pull,
+                      'GEM' AS currency,
+                      90 AS hard_pity,
+                      74 AS soft_pity_start,
+                      FALSE AS guaranteed_featured,
+                      100 AS display_order,
+                      '2025-12-20 09:00:00' AS created_at
+
+                  UNION ALL
+
+                  SELECT
+                      'BEGINNER-01', 'Beginner Wish', 'Discounted banner for new players',
+                      'BEGINNER', 'PUBLISHED', 'https://cdn.example.com/banners/beginner-01.png',
+                      '2026-01-01 00:00:00', NULL, 128, 'GEM',
+                      20, NULL, FALSE, 0,
+                      '2025-12-20 09:05:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'LTD-2026-11-A', 'Moonlit Blade', 'Limited character banner, phase 1',
+                      'LIMITED', 'PUBLISHED', 'https://cdn.example.com/banners/ltd-2026-11-a.png',
+                      '2026-11-01 10:00:00', '2026-11-22 03:59:59', 160, 'GEM',
+                      90, 74, TRUE, 10,
+                      '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'WPN-2026-11-A', 'Epitome of Steel', 'Limited weapon banner, phase 1',
+                      'WEAPON', 'PUBLISHED', 'https://cdn.example.com/banners/wpn-2026-11-a.png',
+                      '2026-11-01 10:00:00', '2026-11-22 03:59:59', 160, 'GEM',
+                      80, 63, TRUE, 20,
+                      '2026-10-25 08:10:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'LTD-2026-11-B', 'Crimson Tide', 'Limited character banner, phase 2',
+                      'LIMITED', 'DRAFT', NULL,
+                      '2026-11-22 10:00:00', '2026-12-13 03:59:59', 160, 'GEM',
+                      90, 74, TRUE, 10,
+                      '2026-11-05 14:00:00'
+
+                  UNION ALL
+
+                  SELECT
+                      'LTD-2026-10-A', 'Autumn Requiem', 'Previous limited character banner',
+                      'LIMITED', 'ARCHIVED', 'https://cdn.example.com/banners/ltd-2026-10-a.png',
+                      '2026-10-01 10:00:00', '2026-10-22 03:59:59', 160, 'GEM',
+                      90, 74, TRUE, 10,
+                      '2026-09-25 08:00:00'
+              ) AS c
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM banners b
+                  WHERE b.code = c.code
+              )
+
+      rollback:
+        - delete:
+            tableName: banners
+            where: >-
+              code IN (
+                'STD-WANDERLUST',
+                'BEGINNER-01',
+                'LTD-2026-11-A',
+                'WPN-2026-11-A',
+                'LTD-2026-11-B',
+                'LTD-2026-10-A'
+              )

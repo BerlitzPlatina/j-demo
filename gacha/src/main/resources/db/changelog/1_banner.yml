@@ -1,0 +1,122 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-banner
+      author: nam
+      changes:
+        - createTable:
+            tableName: banners
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_banners_code
+
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: TEXT
+
+              # STANDARD | LIMITED | WEAPON | BEGINNER (BannerType, stored by name)
+              - column:
+                  name: banner_type
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              # DRAFT | PUBLISHED | ARCHIVED (BannerStatus, stored by name)
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: DRAFT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: image_url
+                  type: VARCHAR(512)
+
+              - column:
+                  name: start_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+              # Null = open-ended (permanent standard banner).
+              - column:
+                  name: end_time
+                  type: DATETIME
+
+              - column:
+                  name: cost_per_pull
+                  type: INT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: currency
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: hard_pity
+                  type: INT
+
+              - column:
+                  name: soft_pity_start
+                  type: INT
+
+              - column:
+                  name: guaranteed_featured
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: display_order
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              # Backs AbstractAuditModel from the common-jpa jar; JPA auditing fills both in.
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+
+        # Backs the live-banner lookup: status + time window.
+        - createIndex:
+            tableName: banners
+            indexName: idx_banners_status_window
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: start_time
+              - column:
+                  name: end_time

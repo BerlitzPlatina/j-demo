@@ -24,6 +24,7 @@ public final class ApiPaths {
     public static final String TAXES = SETTINGS + "/taxes";
     public static final String LEGAL_ENTITIES = API + "/legal-entities";
     public static final String JOBS = API + "/jobs";
+    public static final String BANNERS = API + "/banners";
 
     private ApiPaths() {
     }
