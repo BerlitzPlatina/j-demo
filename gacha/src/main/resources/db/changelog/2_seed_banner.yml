@@ -24,12 +24,12 @@ databaseChangeLog:
                   c.created_at, c.created_at
               FROM (
                   SELECT
-                      'STD-WANDERLUST' AS code,
-                      'Wanderlust Invocation' AS name,
+                      'STD-STARLIGHT' AS code,
+                      'Starlight Wish' AS name,
                       'Permanent standard banner' AS description,
                       'STANDARD' AS banner_type,
                       'PUBLISHED' AS status,
-                      'https://cdn.example.com/banners/std-wanderlust.png' AS image_url,
+                      'https://cdn.example.com/banners/std-starlight.png' AS image_url,
                       '2026-01-01 00:00:00' AS start_time,
                       NULL AS end_time,
                       160 AS cost_per_pull,
@@ -61,7 +61,7 @@ databaseChangeLog:
                   UNION ALL
 
                   SELECT
-                      'WPN-2026-11-A', 'Epitome of Steel', 'Limited weapon banner, phase 1',
+                      'WPN-2026-11-A', 'Forge of Legends', 'Limited weapon banner, phase 1',
                       'WEAPON', 'PUBLISHED', 'https://cdn.example.com/banners/wpn-2026-11-a.png',
                       '2026-11-01 10:00:00', '2026-11-22 03:59:59', 160, 'GEM',
                       80, 63, TRUE, 20,
@@ -96,7 +96,7 @@ databaseChangeLog:
             tableName: banners
             where: >-
               code IN (
-                'STD-WANDERLUST',
+                'STD-STARLIGHT',
                 'BEGINNER-01',
                 'LTD-2026-11-A',
                 'WPN-2026-11-A',

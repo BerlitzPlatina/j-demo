@@ -82,6 +82,14 @@ public class Banner extends AbstractAuditModel {
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
+    /**
+     * Published and already opened (possibly also closed since): players may have pulled on it,
+     * so its pull rules and gacha configuration are frozen.
+     */
+    public boolean hasStartedAt(LocalDateTime at) {
+        return status == BannerStatus.PUBLISHED && !at.isBefore(startTime);
+    }
+
     /** Published, and the given moment falls inside {@code [startTime, endTime)}. */
     public boolean isLiveAt(LocalDateTime at) {
         return status == BannerStatus.PUBLISHED

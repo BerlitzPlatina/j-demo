@@ -1,0 +1,490 @@
+databaseChangeLog:
+  # Development seed data for items and banner gacha configuration.
+  #
+  # Business keys: items.code; (banner code, rarity) for rates; (banner code, item code) for
+  # pool entries. Foreign keys are resolved by joining on those codes, never by hard-coded ids.
+  # LTD-2026-11-B is left incomplete on purpose, to show the readiness check.
+
+  - changeSet:
+      id: seed-items
+      author: nam
+      context: dev
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO items (code, name, description, item_type, rarity, image_url, active, created_at, updated_at)
+              SELECT c.code, c.name, c.description, c.item_type, c.rarity, c.image_url, TRUE, c.ts, c.ts
+              FROM (
+                  SELECT 'CHR-AURELIA' AS code, 'Aurelia' AS name, 'Standard 5-star sword knight' AS description, 'CHARACTER' AS item_type, 5 AS rarity, 'https://cdn.example.com/items/chr-aurelia.png' AS image_url, '2026-10-25 08:00:00' AS ts
+
+                  UNION ALL
+
+                  SELECT 'CHR-KAEL', 'Kael', 'Standard 5-star archer', 'CHARACTER', 5, 'https://cdn.example.com/items/chr-kael.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-SERAPHINE', 'Seraphine', 'Standard 5-star healer', 'CHARACTER', 5, 'https://cdn.example.com/items/chr-seraphine.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-TSUKIKAGE', 'Tsukikage', 'Limited 5-star, featured on Moonlit Blade', 'CHARACTER', 5, 'https://cdn.example.com/items/chr-tsukikage.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-NERISSA', 'Nerissa', 'Limited 5-star, featured on Crimson Tide', 'CHARACTER', 5, 'https://cdn.example.com/items/chr-nerissa.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-ELEGY', 'Elegy', 'Limited 5-star, featured on Autumn Requiem', 'CHARACTER', 5, 'https://cdn.example.com/items/chr-elegy.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-BRAM', 'Bram', NULL, 'CHARACTER', 4, 'https://cdn.example.com/items/chr-bram.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-LIORA', 'Liora', NULL, 'CHARACTER', 4, 'https://cdn.example.com/items/chr-liora.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-OSKAR', 'Oskar', NULL, 'CHARACTER', 4, 'https://cdn.example.com/items/chr-oskar.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-PIPPA', 'Pippa', NULL, 'CHARACTER', 4, 'https://cdn.example.com/items/chr-pippa.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-REN', 'Ren', NULL, 'CHARACTER', 4, 'https://cdn.example.com/items/chr-ren.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'CHR-TAVI', 'Tavi', NULL, 'CHARACTER', 4, 'https://cdn.example.com/items/chr-tavi.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-ASTRAL-EDGE', 'Astral Edge', 'Standard 5-star sword', 'WEAPON', 5, 'https://cdn.example.com/items/wpn-astral-edge.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-TITAN-MAUL', 'Titan Maul', 'Standard 5-star claymore', 'WEAPON', 5, 'https://cdn.example.com/items/wpn-titan-maul.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-MOONFANG', 'Moonfang', 'Limited 5-star blade', 'WEAPON', 5, 'https://cdn.example.com/items/wpn-moonfang.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-FORGEHEART', 'Forgeheart', 'Limited 5-star hammer', 'WEAPON', 5, 'https://cdn.example.com/items/wpn-forgeheart.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-IRON-WARDEN', 'Iron Warden', NULL, 'WEAPON', 4, 'https://cdn.example.com/items/wpn-iron-warden.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-EMBER-BOW', 'Ember Bow', NULL, 'WEAPON', 4, 'https://cdn.example.com/items/wpn-ember-bow.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-TIDE-SPEAR', 'Tide Spear', NULL, 'WEAPON', 4, 'https://cdn.example.com/items/wpn-tide-spear.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-RUNE-CATALYST', 'Rune Catalyst', NULL, 'WEAPON', 4, 'https://cdn.example.com/items/wpn-rune-catalyst.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-TRAINEE-SWORD', 'Trainee Sword', NULL, 'WEAPON', 3, 'https://cdn.example.com/items/wpn-trainee-sword.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-HUNTER-BOW', 'Hunter Bow', NULL, 'WEAPON', 3, 'https://cdn.example.com/items/wpn-hunter-bow.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-OAK-STAFF', 'Oak Staff', NULL, 'WEAPON', 3, 'https://cdn.example.com/items/wpn-oak-staff.png', '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-IRON-SPEAR', 'Iron Spear', NULL, 'WEAPON', 3, 'https://cdn.example.com/items/wpn-iron-spear.png', '2026-10-25 08:00:00'
+              ) AS c
+              WHERE NOT EXISTS (SELECT 1 FROM items i WHERE i.code = c.code)
+      rollback:
+        - delete:
+            tableName: items
+            where: >-
+              code IN ('CHR-AURELIA', 'CHR-KAEL', 'CHR-SERAPHINE', 'CHR-TSUKIKAGE', 'CHR-NERISSA', 'CHR-ELEGY', 'CHR-BRAM', 'CHR-LIORA', 'CHR-OSKAR', 'CHR-PIPPA', 'CHR-REN', 'CHR-TAVI', 'WPN-ASTRAL-EDGE', 'WPN-TITAN-MAUL', 'WPN-MOONFANG', 'WPN-FORGEHEART', 'WPN-IRON-WARDEN', 'WPN-EMBER-BOW', 'WPN-TIDE-SPEAR', 'WPN-RUNE-CATALYST', 'WPN-TRAINEE-SWORD', 'WPN-HUNTER-BOW', 'WPN-OAK-STAFF', 'WPN-IRON-SPEAR')
+
+  - changeSet:
+      id: seed-banner-rarity-rates
+      author: nam
+      context: dev
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO banner_rarity_rates (banner_id, rarity, rate, featured_rate, created_at, updated_at)
+              SELECT b.id, c.rarity, c.rate, c.featured_rate, c.ts, c.ts
+              FROM (
+                  SELECT 'STD-STARLIGHT' AS banner_code, 5 AS rarity, 0.6 AS rate, 0 AS featured_rate, '2026-10-25 08:00:00' AS ts
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 4, 5.1, 0, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 3, 94.3, 0, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 5, 0.6, 0, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 4, 5.1, 0, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 3, 94.3, 0, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 5, 0.6, 50, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 4, 5.1, 50, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 3, 94.3, 0, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 5, 0.7, 75, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 4, 6.0, 75, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 3, 93.3, 0, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-B', 5, 0.6, 50, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-B', 4, 5.1, 50, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-B', 3, 94.3, 0, '2026-10-25 08:00:00'
+              ) AS c
+              JOIN banners b ON b.code = c.banner_code
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM banner_rarity_rates r WHERE r.banner_id = b.id AND r.rarity = c.rarity
+              )
+      rollback:
+        - sql:
+            sql: >-
+              DELETE r FROM banner_rarity_rates r JOIN banners b ON b.id = r.banner_id
+              WHERE b.code IN ('STD-STARLIGHT', 'BEGINNER-01', 'LTD-2026-11-A', 'WPN-2026-11-A', 'LTD-2026-11-B')
+
+  - changeSet:
+      id: seed-banner-pool-items
+      author: nam
+      context: dev
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO banner_pool_items (banner_id, item_id, featured, weight, created_at, updated_at)
+              SELECT b.id, i.id, c.featured, 1, c.ts, c.ts
+              FROM (
+                  SELECT 'STD-STARLIGHT' AS banner_code, 'CHR-AURELIA' AS item_code, FALSE AS featured, '2026-10-25 08:00:00' AS ts
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'CHR-KAEL', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'CHR-SERAPHINE', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-ASTRAL-EDGE', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-TITAN-MAUL', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'CHR-BRAM', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'CHR-LIORA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'CHR-OSKAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'CHR-PIPPA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'CHR-REN', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'CHR-TAVI', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-IRON-WARDEN', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-EMBER-BOW', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-TIDE-SPEAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-RUNE-CATALYST', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-TRAINEE-SWORD', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-HUNTER-BOW', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-OAK-STAFF', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'STD-STARLIGHT', 'WPN-IRON-SPEAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-AURELIA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-KAEL', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-SERAPHINE', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-BRAM', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-LIORA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-OSKAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-PIPPA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-REN', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'CHR-TAVI', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'WPN-TRAINEE-SWORD', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'WPN-HUNTER-BOW', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'WPN-OAK-STAFF', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'BEGINNER-01', 'WPN-IRON-SPEAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-TSUKIKAGE', TRUE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-AURELIA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-KAEL', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-SERAPHINE', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-BRAM', TRUE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-LIORA', TRUE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-OSKAR', TRUE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-PIPPA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-REN', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'CHR-TAVI', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'WPN-IRON-WARDEN', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'WPN-EMBER-BOW', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'WPN-TIDE-SPEAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'WPN-RUNE-CATALYST', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'WPN-TRAINEE-SWORD', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'WPN-HUNTER-BOW', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'WPN-OAK-STAFF', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-A', 'WPN-IRON-SPEAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-MOONFANG', TRUE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-FORGEHEART', TRUE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-ASTRAL-EDGE', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-TITAN-MAUL', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-IRON-WARDEN', TRUE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-EMBER-BOW', TRUE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-TIDE-SPEAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-RUNE-CATALYST', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'CHR-BRAM', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'CHR-LIORA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'CHR-OSKAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'CHR-PIPPA', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'CHR-REN', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'CHR-TAVI', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-TRAINEE-SWORD', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-HUNTER-BOW', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-OAK-STAFF', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'WPN-2026-11-A', 'WPN-IRON-SPEAR', FALSE, '2026-10-25 08:00:00'
+
+                  UNION ALL
+
+                  SELECT 'LTD-2026-11-B', 'CHR-NERISSA', TRUE, '2026-10-25 08:00:00'
+              ) AS c
+              JOIN banners b ON b.code = c.banner_code
+              JOIN items i ON i.code = c.item_code
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM banner_pool_items p WHERE p.banner_id = b.id AND p.item_id = i.id
+              )
+      rollback:
+        - sql:
+            sql: >-
+              DELETE p FROM banner_pool_items p JOIN banners b ON b.id = p.banner_id
+              WHERE b.code IN ('STD-STARLIGHT', 'BEGINNER-01', 'LTD-2026-11-A', 'WPN-2026-11-A', 'LTD-2026-11-B')

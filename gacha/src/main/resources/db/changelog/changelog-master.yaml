@@ -3,3 +3,9 @@ databaseChangeLog:
       file: db/changelog/1_banner.yml
   - include:
       file: db/changelog/2_seed_banner.yml
+  - include:
+      file: db/changelog/3_item.yml
+  - include:
+      file: db/changelog/4_gacha_config.yml
+  - include:
+      file: db/changelog/5_seed_item_gacha_config.yml

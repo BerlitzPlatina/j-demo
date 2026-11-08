@@ -26,6 +26,7 @@ import com.example.gacha.banner.repository.BannerSpecifications;
 import com.example.gacha.common.page.PageableSupport;
 import com.example.gacha.common.support.Entities;
 import com.example.gacha.common.support.Guards;
+import com.example.gacha.gachaconfig.service.GachaConfigService;
 
 /**
  * Banner management: CRUD plus the DRAFT -> PUBLISHED -> ARCHIVED lifecycle.
@@ -40,6 +41,7 @@ import com.example.gacha.common.support.Guards;
  * guarantee) are locked, since players have already pulled under them. Cosmetic fields,
  * the display order and the end time stay editable.</li>
  * <li>Only a draft can be deleted; a banner that was ever published is archived instead.</li>
+ * <li>Publishing requires a complete gacha configuration (see {@link GachaConfigService}).</li>
  * </ul>
  */
 @Service
@@ -56,9 +58,11 @@ public class BannerService {
             Sort.Order.desc("id"));
 
     private final BannerDao bannerDao;
+    private final GachaConfigService gachaConfigService;
 
-    public BannerService(BannerDao bannerDao) {
+    public BannerService(BannerDao bannerDao, GachaConfigService gachaConfigService) {
         this.bannerDao = bannerDao;
+        this.gachaConfigService = gachaConfigService;
     }
 
     // ------------------------------------------------------------------ read
@@ -124,6 +128,7 @@ public class BannerService {
         if (banner.getEndTime() != null && !banner.getEndTime().isAfter(now)) {
             throw new IllegalArgumentException("endTime: the banner window has already ended");
         }
+        gachaConfigService.assertReady(id);
         banner.setStatus(BannerStatus.PUBLISHED);
         return BannerMapper.toResponse(banner, now);
     }

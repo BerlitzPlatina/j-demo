@@ -1,0 +1,133 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-banner-rarity-rate
+      author: nam
+      changes:
+        - createTable:
+            tableName: banner_rarity_rates
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: banner_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rarity
+                  type: INT
+                  constraints:
+                    nullable: false
+              # Percent per pull, before pity; a banner's rows add up to 100.
+              - column:
+                  name: rate
+                  type: DECIMAL(7,4)
+                  constraints:
+                    nullable: false
+              # Percent of this rarity that goes to featured items.
+              - column:
+                  name: featured_rate
+                  type: DECIMAL(7,4)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: banner_rarity_rates
+            columnNames: banner_id, rarity
+            constraintName: uk_banner_rarity_rates_banner_rarity
+        # Configuration belongs to the banner: deleting a draft banner takes it along.
+        - addForeignKeyConstraint:
+            baseTableName: banner_rarity_rates
+            baseColumnNames: banner_id
+            referencedTableName: banners
+            referencedColumnNames: id
+            constraintName: fk_banner_rarity_rates_banner
+            onDelete: CASCADE
+
+  - changeSet:
+      id: create-banner-pool-item
+      author: nam
+      changes:
+        - createTable:
+            tableName: banner_pool_items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: banner_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: featured
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              # Relative weight within the (rarity, featured) group.
+              - column:
+                  name: weight
+                  type: INT
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: banner_pool_items
+            columnNames: banner_id, item_id
+            constraintName: uk_banner_pool_items_banner_item
+        - addForeignKeyConstraint:
+            baseTableName: banner_pool_items
+            baseColumnNames: banner_id
+            referencedTableName: banners
+            referencedColumnNames: id
+            constraintName: fk_banner_pool_items_banner
+            onDelete: CASCADE
+        # An item in a pool cannot be deleted; the service says "deactivate it instead".
+        - addForeignKeyConstraint:
+            baseTableName: banner_pool_items
+            baseColumnNames: item_id
+            referencedTableName: items
+            referencedColumnNames: id
+            constraintName: fk_banner_pool_items_item
+            onDelete: RESTRICT
+        - createIndex:
+            tableName: banner_pool_items
+            indexName: idx_banner_pool_items_item
+            columns:
+              - column:
+                  name: item_id

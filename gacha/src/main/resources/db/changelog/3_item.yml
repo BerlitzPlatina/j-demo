@@ -1,0 +1,70 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-item
+      author: nam
+      changes:
+        - createTable:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_items_code
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              # CHARACTER | WEAPON (ItemType, stored by name)
+              - column:
+                  name: item_type
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              # Star level 1..6
+              - column:
+                  name: rarity
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: image_url
+                  type: VARCHAR(512)
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              # Backs AbstractAuditModel from the common-jpa jar; JPA auditing fills both in.
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: items
+            indexName: idx_items_type_rarity
+            columns:
+              - column:
+                  name: item_type
+              - column:
+                  name: rarity
