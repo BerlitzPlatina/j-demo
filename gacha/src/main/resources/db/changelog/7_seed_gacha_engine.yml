@@ -1,0 +1,149 @@
+databaseChangeLog:
+  # Development fixtures for the gacha engine.
+  #
+  # Business keys: user_profiles are owned by (user_code, banner_code), user_inventories by
+  # (user_code, item_code), and pull_histories by code. Banner and item ids are resolved by
+  # joining on banners.code and items.code; the profile id in pull history is resolved from the
+  # same user/profile pair. One profile is intentionally inactive so the active filter is exercised.
+
+  - changeSet:
+      id: seed-user-profiles
+      author: nam
+      context: dev
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO user_profiles (
+                  user_code, banner_id, banner_code, total_pulls, pity_counter,
+                  guaranteed_counter, is_guaranteed, last_guaranteed_item_id,
+                  last_five_star_item_id, soft_pity_counter, notes, active,
+                  created_at, updated_at
+              )
+              SELECT
+                  c.user_code, b.id, c.banner_code, c.total_pulls, c.pity_counter,
+                  c.guaranteed_counter, c.is_guaranteed, lg.id, lf.id,
+                  c.soft_pity_counter, c.notes, c.active, c.ts, c.ts
+              FROM (
+                  SELECT 'USER-ALICE' AS user_code, 'STD-STARLIGHT' AS banner_code, 78 AS total_pulls, 18 AS pity_counter, 5 AS guaranteed_counter, FALSE AS is_guaranteed, 'CHR-AURELIA' AS last_guaranteed_item_code, 'CHR-KAEL' AS last_five_star_item_code, 0 AS soft_pity_counter, 'Normal profile' AS notes, TRUE AS active, '2026-11-05 08:30:00' AS ts
+                  UNION ALL
+                  SELECT 'USER-ALICE', 'LTD-2026-11-A', 90, 90, 0, TRUE, 'CHR-TSUKIKAGE', 'CHR-TSUKIKAGE', 74, 'Seasonal profile', TRUE, '2026-11-05 10:15:00'
+                  UNION ALL
+                  SELECT 'USER-BEN', 'STD-STARLIGHT', 41, 4, 2, FALSE, 'CHR-BRAM', 'CHR-AURELIA', 0, 'Fresh account', TRUE, '2026-11-05 11:00:00'
+                  UNION ALL
+                  SELECT 'USER-CHARA', 'LTD-2026-11-B', 32, 12, 1, FALSE, 'CHR-NERISSA', 'CHR-ELEGY', 8, 'Draft banner profile', FALSE, '2026-11-05 12:30:00'
+              ) AS c
+              JOIN banners b ON b.code = c.banner_code
+              LEFT JOIN items lg ON lg.code = c.last_guaranteed_item_code
+              LEFT JOIN items lf ON lf.code = c.last_five_star_item_code
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM user_profiles up
+                  WHERE up.user_code = c.user_code
+                    AND up.banner_code = c.banner_code
+              )
+      rollback:
+        - delete:
+            tableName: user_profiles
+            where: >-
+              (user_code, banner_code) IN (
+                ('USER-ALICE', 'STD-STARLIGHT'),
+                ('USER-ALICE', 'LTD-2026-11-A'),
+                ('USER-BEN', 'STD-STARLIGHT'),
+                ('USER-CHARA', 'LTD-2026-11-B')
+              )
+
+  - changeSet:
+      id: seed-user-inventories
+      author: nam
+      context: dev
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO user_inventories (
+                  user_code, item_id, item_code, quantity, times_obtained,
+                  notes, active, created_at, updated_at
+              )
+              SELECT
+                  c.user_code, i.id, c.item_code, c.quantity, c.times_obtained,
+                  c.notes, c.active, c.ts, c.ts
+              FROM (
+                  SELECT 'USER-ALICE' AS user_code, 'CHR-AURELIA' AS item_code, 2 AS quantity, 2 AS times_obtained, 'Accumulated from 2 pulls' AS notes, TRUE AS active, '2026-11-05 08:10:00' AS ts
+                  UNION ALL
+                  SELECT 'USER-ALICE', 'CHR-TSUKIKAGE', 1, 1, 'Featured character from seasonal banner', TRUE, '2026-11-05 10:25:00'
+                  UNION ALL
+                  SELECT 'USER-BEN', 'CHR-BRAM', 1, 1, 'Fresh 4-star character', TRUE, '2026-11-05 11:15:00'
+                  UNION ALL
+                  SELECT 'USER-BEN', 'WPN-TRAINEE-SWORD', 3, 3, 'Starter weapon stack', TRUE, '2026-11-05 11:30:00'
+                  UNION ALL
+                  SELECT 'USER-CHARA', 'CHR-NERISSA', 1, 1, 'Limited banner reward', FALSE, '2026-11-05 12:45:00'
+              ) AS c
+              JOIN items i ON i.code = c.item_code
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM user_inventories ui
+                  WHERE ui.user_code = c.user_code
+                    AND ui.item_code = c.item_code
+              )
+      rollback:
+        - delete:
+            tableName: user_inventories
+            where: >-
+              (user_code, item_code) IN (
+                ('USER-ALICE', 'CHR-AURELIA'),
+                ('USER-ALICE', 'CHR-TSUKIKAGE'),
+                ('USER-BEN', 'CHR-BRAM'),
+                ('USER-BEN', 'WPN-TRAINEE-SWORD'),
+                ('USER-CHARA', 'CHR-NERISSA')
+              )
+
+  - changeSet:
+      id: seed-pull-histories
+      author: nam
+      context: dev
+      changes:
+        - sql:
+            sql: |-
+              INSERT INTO pull_histories (
+                  code, user_code, user_profile_id, banner_id, banner_code,
+                  item_id, item_code, rarity, is_featured, pull_type,
+                  pity_at_pull, guaranteed_at_pull, soft_pity_at_pull,
+                  was_guaranteed, notes, created_at, updated_at
+              )
+              SELECT
+                  c.code, c.user_code, up.id, b.id, c.banner_code,
+                  i.id, c.item_code, c.rarity, c.is_featured, c.pull_type,
+                  c.pity_at_pull, c.guaranteed_at_pull, c.soft_pity_at_pull,
+                  c.was_guaranteed, c.notes, c.ts, c.ts
+              FROM (
+                  SELECT 'PH-ALICE-0001' AS code, 'USER-ALICE' AS user_code, 'STD-STARLIGHT' AS banner_code, 'CHR-AURELIA' AS item_code, 5 AS rarity, TRUE AS is_featured, 'SINGLE' AS pull_type, 15 AS pity_at_pull, 1 AS guaranteed_at_pull, 0 AS soft_pity_at_pull, FALSE AS was_guaranteed, 'Initial 5-star pull' AS notes, '2026-11-04 08:15:00' AS ts
+                  UNION ALL
+                  SELECT 'PH-ALICE-0002', 'USER-ALICE', 'STD-STARLIGHT', 'CHR-LIORA', 4, FALSE, 'SINGLE', 17, 1, 0, FALSE, '4-star pull', '2026-11-04 08:25:00'
+                  UNION ALL
+                  SELECT 'PH-ALICE-0003', 'USER-ALICE', 'LTD-2026-11-A', 'CHR-TSUKIKAGE', 5, TRUE, 'SINGLE', 88, 0, 72, TRUE, 'Featured seasonal pull', '2026-11-05 10:00:00'
+                  UNION ALL
+                  SELECT 'PH-BEN-0001', 'USER-BEN', 'STD-STARLIGHT', 'CHR-BRAM', 4, FALSE, 'SINGLE', 4, 0, 0, FALSE, 'Early 4-star pull', '2026-11-05 11:10:00'
+                  UNION ALL
+                  SELECT 'PH-BEN-0002', 'USER-BEN', 'STD-STARLIGHT', 'WPN-TRAINEE-SWORD', 3, FALSE, 'MULTI_10', 5, 0, 0, FALSE, 'Low-rarity starter weapon', '2026-11-05 11:20:00'
+                  UNION ALL
+                  SELECT 'PH-CHARA-0001', 'USER-CHARA', 'LTD-2026-11-B', 'CHR-NERISSA', 5, TRUE, 'MULTI_10', 12, 1, 9, FALSE, 'Seasonal priority pull', '2026-11-05 12:40:00'
+              ) AS c
+              JOIN user_profiles up ON up.user_code = c.user_code AND up.banner_code = c.banner_code
+              JOIN banners b ON b.code = c.banner_code
+              JOIN items i ON i.code = c.item_code
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM pull_histories ph
+                  WHERE ph.code = c.code
+              )
+      rollback:
+        - delete:
+            tableName: pull_histories
+            where: >-
+              code IN (
+                'PH-ALICE-0001',
+                'PH-ALICE-0002',
+                'PH-ALICE-0003',
+                'PH-BEN-0001',
+                'PH-BEN-0002',
+                'PH-CHARA-0001'
+              )

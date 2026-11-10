@@ -19,6 +19,11 @@
       "version": "1.8.1",
       "resolved": "ghcr.io/devcontainers/features/java@sha256:8157bab2d8d71e40b2f3128c162fab763e2b11038fdd33784549290a5d386b48",
       "integrity": "sha256:8157bab2d8d71e40b2f3128c162fab763e2b11038fdd33784549290a5d386b48"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "1.8.1",
+      "resolved": "ghcr.io/devcontainers/features/python@sha256:7b35df4ff12f378effab187341b1b1b2373de6dd6d027d87aa77dd246c62b517",
+      "integrity": "sha256:7b35df4ff12f378effab187341b1b1b2373de6dd6d027d87aa77dd246c62b517"
     }
   }
 }

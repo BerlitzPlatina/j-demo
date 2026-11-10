@@ -6,6 +6,9 @@
       "version": "21-oracle",
       "jdkDistro": "oracle"
     },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
     "ghcr.io/devcontainers/features/azure-cli:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": false
@@ -21,7 +24,8 @@
         "vscjava.vscode-java-pack",
         "redhat.java",
         "vscjava.vscode-spring-initializr",
-        "Anthropic.claude-code"
+        "Anthropic.claude-code",
+        "Postman.postman-for-vscode"
       ]
     }
   },

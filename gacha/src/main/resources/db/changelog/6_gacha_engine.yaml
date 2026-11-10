@@ -1,0 +1,287 @@
+databaseChangeLog:
+  - changeSet:
+      id: gacha-engine-tables
+      author: copilot
+      changes:
+        - createTable:
+            tableName: user_profiles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: banner_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: banner_code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_pulls
+                  type: INT
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+              - column:
+                  name: pity_counter
+                  type: INT
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+              - column:
+                  name: guaranteed_counter
+                  type: INT
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+              - column:
+                  name: is_guaranteed
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+                  defaultValue: false
+              - column:
+                  name: last_guaranteed_item_id
+                  type: BIGINT
+              - column:
+                  name: last_five_star_item_id
+                  type: BIGINT
+              - column:
+                  name: soft_pity_counter
+                  type: INT
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+                  defaultValue: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_user_profiles_user_banner
+            tableName: user_profiles
+            columns:
+              - column:
+                  name: user_code
+              - column:
+                  name: banner_id
+            unique: true
+        - createIndex:
+            indexName: idx_user_profiles_banner
+            tableName: user_profiles
+            columns:
+              - column:
+                  name: banner_id
+
+        - createTable:
+            tableName: pull_histories
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: user_code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_profile_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: banner_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: banner_code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: item_code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rarity
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_featured
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pull_type
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pity_at_pull
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: guaranteed_at_pull
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: soft_pity_at_pull
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: was_guaranteed
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_pull_histories_user_banner
+            tableName: pull_histories
+            columns:
+              - column:
+                  name: user_code
+              - column:
+                  name: banner_id
+        - createIndex:
+            indexName: idx_pull_histories_user
+            tableName: pull_histories
+            columns:
+              - column:
+                  name: user_code
+        - createIndex:
+            indexName: idx_pull_histories_item
+            tableName: pull_histories
+            columns:
+              - column:
+                  name: item_id
+
+        - createTable:
+            tableName: user_inventories
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: item_code
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: INT
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+              - column:
+                  name: times_obtained
+                  type: INT
+                  constraints:
+                    nullable: false
+                  defaultValue: 0
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+                  defaultValue: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_user_inventories_user_item
+            tableName: user_inventories
+            columns:
+              - column:
+                  name: user_code
+              - column:
+                  name: item_id
+            unique: true
+        - createIndex:
+            indexName: idx_user_inventories_user
+            tableName: user_inventories
+            columns:
+              - column:
+                  name: user_code
